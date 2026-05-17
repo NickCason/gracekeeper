@@ -1,7 +1,13 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using GraceKeeper.Bootstrapper.Views;
 using WixToolset.Mba.Core;
 
 namespace GraceKeeper.Bootstrapper.ViewModels;
@@ -11,31 +17,155 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private readonly IEngine _engine;
     private readonly IBootstrapperCommand _command;
     private readonly GraceKeeperBootstrapper _ba;
+
     private UserControl? _currentPage;
+    private bool _acceptedLicense;
+    private bool _launchOnFinish = true;
+    private int _percent;
+    private string _statusText = "";
+    private string _timeRemaining = "";
+    private string _version = "";
+    private string _licenseText = "";
 
     public event Action? RequestClose;
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public UserControl? CurrentPage
-    {
-        get => _currentPage;
-        set { _currentPage = value; OnPropertyChanged(); }
-    }
+    public UserControl? CurrentPage { get => _currentPage; set { _currentPage = value; OnPropertyChanged(); } }
+    public bool AcceptedLicense { get => _acceptedLicense; set { _acceptedLicense = value; OnPropertyChanged(); ((RelayCommand)InstallCommand).RaiseCanExecuteChanged(); } }
+    public bool LaunchOnFinish { get => _launchOnFinish; set { _launchOnFinish = value; OnPropertyChanged(); } }
+    public int Percent { get => _percent; set { _percent = value; OnPropertyChanged(); } }
+    public string StatusText { get => _statusText; set { _statusText = value; OnPropertyChanged(); } }
+    public string TimeRemaining { get => _timeRemaining; set { _timeRemaining = value; OnPropertyChanged(); } }
+    public string Version { get => _version; set { _version = value; OnPropertyChanged(); } }
+    public string LicenseText { get => _licenseText; set { _licenseText = value; OnPropertyChanged(); } }
+
+    public ICommand InstallCommand { get; }
+    public ICommand CancelCommand { get; }
+    public ICommand FinishCommand { get; }
 
     public MainViewModel(IEngine engine, IBootstrapperCommand command, GraceKeeperBootstrapper ba)
     {
         _engine = engine;
         _command = command;
         _ba = ba;
+
+        InstallCommand = new RelayCommand(_ => DoInstall(), _ => AcceptedLicense);
+        CancelCommand = new RelayCommand(_ => DoCancel());
+        FinishCommand = new RelayCommand(_ => DoFinish());
+
+        // WixToolset.Mba.Core 4.0.6 event names confirmed via reflection:
+        //   ExecuteMsiMessage  -> ExecuteMsiMessageEventArgs  (.Message: string)
+        //   Progress           -> ProgressEventArgs           (.OverallPercentage: int)
+        //   ApplyComplete      -> ApplyCompleteEventArgs      (.Status: int)
+        _ba.ExecuteMsiMessage += OnExecuteMsiMessage;
+        _ba.Progress += OnProgress;
+        _ba.ApplyComplete += OnApplyComplete;
     }
 
     public void Initialize()
     {
-        // Placeholder. Task 15 replaces this with real page navigation.
-        var tb = new TextBlock { Text = "GraceKeeper Setup (BA loaded)", Margin = new System.Windows.Thickness(20) };
-        CurrentPage = new UserControl { Content = tb };
+        // API adaptation: IEngine has no StringVariables indexer in 4.0.6.
+        // Use GetVariableString(name) instead.
+        try { Version = _engine.GetVariableString("WixBundleVersion"); }
+        catch { Version = ""; }
+
+        LicenseText = LoadEmbeddedLicense();
+
+        if (_command.Action == LaunchAction.Uninstall)
+        {
+            // Uninstall flow added in Task 16. Placeholder for now.
+            CurrentPage = new UserControl
+            {
+                Content = new TextBlock { Text = "Uninstall flow placeholder", Margin = new Thickness(20) }
+            };
+        }
+        else
+        {
+            CurrentPage = new WelcomePage { DataContext = this };
+        }
+    }
+
+    private string LoadEmbeddedLicense()
+    {
+        try
+        {
+            var baDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)!;
+            var path = Path.Combine(baDir, "LICENSE");
+            return File.Exists(path) ? File.ReadAllText(path) : "License text unavailable.";
+        }
+        catch { return "License text unavailable."; }
+    }
+
+    private void DoInstall()
+    {
+        CurrentPage = new ProgressPage { DataContext = this };
+        StatusText = "Preparing…";
+        _engine.Plan(LaunchAction.Install);
+    }
+
+    private void DoCancel()
+    {
+        _engine.Quit(1602);  // ERROR_INSTALL_USEREXIT
+        RequestClose?.Invoke();
+    }
+
+    private void DoFinish()
+    {
+        if (LaunchOnFinish)
+        {
+            try
+            {
+                // API adaptation: use GetVariableString("InstallFolder") not StringVariables["InstallFolder"]
+                var installDir = _engine.GetVariableString("InstallFolder");
+                Process.Start(Path.Combine(installDir, "GraceKeeper.exe"));
+            }
+            catch { /* best effort */ }
+        }
+        RequestClose?.Invoke();
+    }
+
+    private void OnExecuteMsiMessage(object? sender, ExecuteMsiMessageEventArgs e)
+    {
+        var msg = e.Message ?? "";
+        Application.Current.Dispatcher.Invoke(() => StatusText = msg);
+    }
+
+    private void OnProgress(object? sender, ProgressEventArgs e)
+    {
+        // ProgressEventArgs.OverallPercentage confirmed in 4.0.6 via reflection.
+        var p = e.OverallPercentage;
+        Application.Current.Dispatcher.Invoke(() => Percent = p);
+    }
+
+    private void OnApplyComplete(object? sender, ApplyCompleteEventArgs e)
+    {
+        // ApplyCompleteEventArgs.Status confirmed in 4.0.6 via reflection.
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (e.Status >= 0)
+            {
+                CurrentPage = new FinishPage { DataContext = this };
+            }
+            else
+            {
+                StatusText = $"Install failed with code 0x{e.Status:X8}";
+                // ErrorPage added in Task 17.
+            }
+        });
     }
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
+
+public sealed class RelayCommand : ICommand
+{
+    private readonly Action<object?> _execute;
+    private readonly Func<object?, bool>? _canExecute;
+    public event EventHandler? CanExecuteChanged;
+    public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
+    { _execute = execute; _canExecute = canExecute; }
+    public bool CanExecute(object? p) => _canExecute?.Invoke(p) ?? true;
+    public void Execute(object? p) => _execute(p);
+    public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }
