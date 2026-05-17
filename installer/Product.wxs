@@ -162,7 +162,20 @@
                   Impersonate="no"
                   Return="ignore"/>
 
+    <!-- GraceKeeper.exe is a tray app (ShutdownMode=OnExplicitShutdown), so the
+         user closing the window only hides it; the process keeps running and
+         holds file locks on the installed binaries. Without this, an uninstall
+         leaves the dashboard alive with a "ghost" window and defers all the
+         file deletions until reboot. -->
+    <CustomAction Id="StopDashboard"
+                  Directory="INSTALLDIR"
+                  ExeCommand='taskkill.exe /F /IM GraceKeeper.exe'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
     <InstallExecuteSequence>
+      <Custom Action="StopDashboard"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
       <Custom Action="StopDismisser"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
       <Custom Action="RemoveScheduledTask" Before="RemoveFiles"       Condition="REMOVE=&quot;ALL&quot;"/>
       <Custom Action="CreateScheduledTask" After="InstallFiles"       Condition="NOT Installed"/>
