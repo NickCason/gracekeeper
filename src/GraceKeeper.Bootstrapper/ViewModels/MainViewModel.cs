@@ -45,6 +45,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand UninstallCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand FinishCommand { get; }
+    public ICommand ViewLogCommand { get; }
 
     public MainViewModel(IEngine engine, IBootstrapperCommand command, GraceKeeperBootstrapper ba)
     {
@@ -56,6 +57,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         CancelCommand = new RelayCommand(_ => DoCancel());
         FinishCommand = new RelayCommand(_ => DoFinish());
         UninstallCommand = new RelayCommand(_ => DoUninstall());
+        ViewLogCommand = new RelayCommand(_ => DoViewLog());
 
         // WixToolset.Mba.Core 4.0.6 event names confirmed via reflection:
         //   ExecuteMsiMessage  -> ExecuteMsiMessageEventArgs  (.Message: string)
@@ -116,6 +118,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
         RequestClose?.Invoke();
     }
 
+    private void DoViewLog()
+    {
+        try
+        {
+            var logVar = _engine.GetVariableString("WixBundleLog");
+            if (!string.IsNullOrEmpty(logVar))
+                Process.Start("explorer.exe", $"/select,\"{logVar}\"");
+        }
+        catch { /* best effort */ }
+    }
+
     private void DoFinish()
     {
         if (LaunchOnFinish)
@@ -172,8 +185,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             }
             else
             {
-                StatusText = $"Operation failed with code 0x{e.Status:X8}";
-                // ErrorPage added in Task 17.
+                StatusText = $"Operation failed with code 0x{e.Status:X8}. The Burn log directory may contain details.";
+                CurrentPage = new ErrorPage { DataContext = this };
             }
         });
     }
