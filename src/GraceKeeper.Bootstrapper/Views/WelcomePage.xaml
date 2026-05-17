@@ -36,9 +36,44 @@
         <RowDefinition Height="*"/>
         <RowDefinition Height="Auto"/>
       </Grid.RowDefinitions>
-      <TextBlock Grid.Row="0" FontSize="26" FontWeight="Light" Foreground="White" TextWrapping="Wrap">
-        <Run Text="Keep the grace period "/><Run Text="alive" Foreground="{StaticResource Accent}"/><Run Text="."/>
-      </TextBlock>
+      <StackPanel Grid.Row="0" Orientation="Horizontal">
+        <StackPanel.Resources>
+          <Style TargetType="TextBlock">
+            <Setter Property="FontSize" Value="26"/>
+            <Setter Property="FontWeight" Value="Light"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Opacity" Value="0"/>
+            <Setter Property="RenderTransform">
+              <Setter.Value>
+                <TranslateTransform Y="8"/>
+              </Setter.Value>
+            </Setter>
+          </Style>
+        </StackPanel.Resources>
+        <StackPanel.Triggers>
+          <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+            <BeginStoryboard>
+              <Storyboard>
+                <DoubleAnimation Storyboard.TargetName="W1" Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W1" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="8" To="0" BeginTime="0:0:0" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W2" Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.06" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W2" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="8" To="0" BeginTime="0:0:0.06" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W3" Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.12" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W3" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="8" To="0" BeginTime="0:0:0.12" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W4" Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.18" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W4" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="8" To="0" BeginTime="0:0:0.18" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W5" Storyboard.TargetProperty="Opacity" From="0" To="1" BeginTime="0:0:0.24" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+                <DoubleAnimation Storyboard.TargetName="W5" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)" From="8" To="0" BeginTime="0:0:0.24" Duration="{StaticResource Duration.Slow}" EasingFunction="{StaticResource Easing.Standard}"/>
+              </Storyboard>
+            </BeginStoryboard>
+          </EventTrigger>
+        </StackPanel.Triggers>
+        <TextBlock x:Name="W1" Text="Keep" Margin="0,0,8,0"/>
+        <TextBlock x:Name="W2" Text="the" Margin="0,0,8,0"/>
+        <TextBlock x:Name="W3" Text="grace" Margin="0,0,8,0"/>
+        <TextBlock x:Name="W4" Text="period" Margin="0,0,8,0"/>
+        <TextBlock x:Name="W5" Text="alive." Foreground="{StaticResource Accent}"/>
+      </StackPanel>
       <TextBlock Grid.Row="1" Margin="0,12,0,0" FontSize="12" Foreground="{StaticResource MutedText}" TextWrapping="Wrap">
         GraceKeeper automatically dismisses FactoryTalk activation popups and cleans .rnl refreshment files on a schedule. It runs in your system tray and stays out of the way.
       </TextBlock>
