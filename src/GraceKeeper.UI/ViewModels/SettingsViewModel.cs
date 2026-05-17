@@ -1,0 +1,62 @@
+using System;
+using System.Threading.Tasks;
+using System.Windows.Data;
+using GraceKeeper.Core;
+
+namespace GraceKeeper.UI.ViewModels;
+
+public sealed class SettingsViewModel : ObservableObject
+{
+    private readonly ConfigStore _store;
+    private readonly ScheduledTaskClient _scheduler;
+    private int _intervalMinutes;
+    private string _startTime = "03:00";
+    private string _theme = "auto";
+
+    public int IntervalMinutes { get => _intervalMinutes; set => Set(ref _intervalMinutes, value); }
+    public string StartTime { get => _startTime; set => Set(ref _startTime, value); }
+    public string Theme { get => _theme; set => Set(ref _theme, value); }
+
+    public string Version =>
+        System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "dev";
+
+    public SettingsViewModel()
+    {
+        _store = new ConfigStore(PathResolver.ConfigPath);
+        _scheduler = new ScheduledTaskClient("GraceKeeper - Cleanup RNL");
+        var cfg = _store.Load();
+        _intervalMinutes = cfg.Schedule.IntervalMinutes;
+        _startTime = cfg.Schedule.StartTime;
+        _theme = cfg.Theme;
+    }
+
+    public async Task SaveAsync()
+    {
+        var cfg = _store.Load();
+        cfg.Schedule.IntervalMinutes = IntervalMinutes;
+        cfg.Schedule.StartTime = StartTime;
+        cfg.Theme = Theme;
+        _store.Save(cfg);
+        // Best-effort: if the scheduled task doesn't exist yet (e.g. first install hasn't completed),
+        // these calls fail silently (schtasks returns non-zero). That's fine — config.json is the
+        // source of truth and the task gets the values on next install/upgrade.
+        try { await _scheduler.ChangeIntervalAsync(IntervalMinutes); } catch { }
+        try { await _scheduler.ChangeStartTimeAsync(StartTime); } catch { }
+    }
+}
+
+public sealed class ThemeRadioConverter : IValueConverter
+{
+    public static readonly ThemeRadioConverter Auto = new("auto");
+    public static readonly ThemeRadioConverter Light = new("light");
+    public static readonly ThemeRadioConverter Dark = new("dark");
+
+    private readonly string _target;
+    private ThemeRadioConverter(string t) { _target = t; }
+
+    public object Convert(object value, Type t, object p, System.Globalization.CultureInfo c)
+        => (value as string) == _target;
+
+    public object ConvertBack(object value, Type t, object p, System.Globalization.CultureInfo c)
+        => (value is bool b && b) ? _target : Binding.DoNothing;
+}
