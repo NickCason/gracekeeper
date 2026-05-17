@@ -24,6 +24,7 @@
                   Vital="yes"
                   Compressed="yes"
                   Visible="no"
+                  DisplayInternalUI="no"
                   ForcePerMachine="yes"/>
     </Chain>
   </Bundle>
