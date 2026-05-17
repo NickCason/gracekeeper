@@ -61,6 +61,10 @@ internal sealed class DefaultProcessLauncher : IProcessLauncher
 {
     public void Launch(string fullPath)
     {
-        Process.Start(new ProcessStartInfo { FileName = fullPath, UseShellExecute = false, CreateNoWindow = true });
+        try
+        {
+            Process.Start(new ProcessStartInfo { FileName = fullPath, UseShellExecute = false, CreateNoWindow = true });
+        }
+        catch { /* swallow — supervisor's retry counter handles repeated failures */ }
     }
 }
