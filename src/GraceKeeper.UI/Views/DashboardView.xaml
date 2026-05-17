@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:vm="clr-namespace:GraceKeeper.UI.ViewModels"
       xmlns:conv="clr-namespace:GraceKeeper.UI.Converters"
+      xmlns:ctl="clr-namespace:GraceKeeper.UI.Controls"
       Background="{DynamicResource Bg.Page}"
       Foreground="{DynamicResource Text.Primary}">
     <Page.DataContext>
@@ -64,10 +65,15 @@
                         CornerRadius="8" Padding="14" Margin="0,0,5,0">
                     <Border BorderBrush="{DynamicResource Brand.Red}" BorderThickness="3,0,0,0" Padding="6,0,0,0">
                         <StackPanel>
-                            <TextBlock Text="{Binding PopupsDismissedLifetime}" FontSize="28" FontWeight="SemiBold"/>
+                            <ctl:AnimatedCounter Value="{Binding PopupsDismissedLifetime}" FontSize="28" FontWeight="SemiBold"/>
                             <TextBlock Text="Popups dismissed" FontSize="11" Foreground="{DynamicResource Text.Muted}"/>
-                            <TextBlock Text="{Binding PopupsToday, StringFormat='+{0} today'}" FontSize="11"
-                                       Foreground="{DynamicResource Semantic.Good}" Margin="0,5,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <TextBlock Text="+" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                                <ctl:AnimatedCounter Value="{Binding PopupsToday}" FontSize="11"
+                                                     Foreground="{DynamicResource Semantic.Good}"
+                                                     RollDuration="0:0:0.6"/>
+                                <TextBlock Text=" today" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </Border>
@@ -75,10 +81,15 @@
                         BorderBrush="{DynamicResource Border.Default}" BorderThickness="1"
                         CornerRadius="8" Padding="14" Margin="5,0,5,0">
                     <StackPanel>
-                        <TextBlock Text="{Binding RnlFilesDeletedLifetime}" FontSize="28" FontWeight="SemiBold"/>
+                        <ctl:AnimatedCounter Value="{Binding RnlFilesDeletedLifetime}" FontSize="28" FontWeight="SemiBold"/>
                         <TextBlock Text=".rnl files deleted" FontSize="11" Foreground="{DynamicResource Text.Muted}"/>
-                        <TextBlock Text="{Binding FilesToday, StringFormat='+{0} today'}" FontSize="11"
-                                   Foreground="{DynamicResource Semantic.Good}" Margin="0,5,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="+" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                            <ctl:AnimatedCounter Value="{Binding FilesToday}" FontSize="11"
+                                                 Foreground="{DynamicResource Semantic.Good}"
+                                                 RollDuration="0:0:0.6"/>
+                            <TextBlock Text=" today" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Background="{DynamicResource Bg.Surface}"
