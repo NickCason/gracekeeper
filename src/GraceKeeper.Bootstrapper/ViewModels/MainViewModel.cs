@@ -143,13 +143,16 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         if (LaunchOnFinish)
         {
+            // Per-machine install always lands at %ProgramFiles%\GraceKeeper.
+            // Burn doesn't expose the MSI's INSTALLDIR as a bundle variable by
+            // default, so derive the path from the well-known folder rather
+            // than from a (nonexistent) GetVariableString("InstallFolder").
             try
             {
-                // API adaptation: use GetVariableString("InstallFolder") not StringVariables["InstallFolder"]
-                var installDir = _engine.GetVariableString("InstallFolder");
-                Process.Start(Path.Combine(installDir, "GraceKeeper.exe"));
+                var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+                Process.Start(Path.Combine(programFiles, "GraceKeeper", "GraceKeeper.exe"));
             }
-            catch { /* best effort */ }
+            catch { /* best effort — if it fails, HKLM Run picks it up at next login */ }
         }
         RequestClose?.Invoke();
     }
