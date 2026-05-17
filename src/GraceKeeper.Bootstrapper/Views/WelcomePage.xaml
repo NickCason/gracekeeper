@@ -60,7 +60,7 @@
         <TextBlock Grid.Column="0" Text="Installs to C:\Program Files\GraceKeeper" Foreground="#666666" FontSize="11" VerticalAlignment="Center"/>
         <StackPanel Grid.Column="1" Orientation="Horizontal">
           <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" Margin="0,0,8,0"/>
-          <Button Content="Install" Style="{StaticResource PrimaryButton}" Command="{Binding InstallCommand}" IsEnabled="{Binding AcceptedLicense}"/>
+          <Button Content="Install" Style="{StaticResource PrimaryButton}" Command="{Binding InstallCommand}"/>
         </StackPanel>
       </Grid>
     </Border>
