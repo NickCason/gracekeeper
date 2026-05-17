@@ -109,6 +109,32 @@
                     <TextBlock Text="RECENT ACTIVITY" FontSize="10" FontWeight="SemiBold"
                                Foreground="{DynamicResource Text.Muted}" Margin="0,0,0,8"/>
                     <ItemsControl ItemsSource="{Binding RecentActivity}" MaxHeight="240">
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Opacity" Value="0"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="-8"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="0" To="1"
+                                                                 Duration="{StaticResource Duration.Standard}"
+                                                                 EasingFunction="{StaticResource Easing.Standard}"/>
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                                 From="-8" To="0"
+                                                                 Duration="{StaticResource Duration.Slow}"
+                                                                 EasingFunction="{StaticResource Easing.Standard}"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
                         <ItemsControl.Template>
                             <ControlTemplate TargetType="ItemsControl">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
