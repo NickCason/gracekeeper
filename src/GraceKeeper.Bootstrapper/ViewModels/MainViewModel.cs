@@ -60,9 +60,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         ViewLogCommand = new RelayCommand(_ => DoViewLog());
 
         // WixToolset.Mba.Core 4.0.6 event names confirmed via reflection:
+        //   DetectComplete     -> DetectCompleteEventArgs     (.Status: int)
+        //   PlanComplete       -> PlanCompleteEventArgs       (.Status: int)
         //   ExecuteMsiMessage  -> ExecuteMsiMessageEventArgs  (.Message: string)
         //   Progress           -> ProgressEventArgs           (.OverallPercentage: int)
         //   ApplyComplete      -> ApplyCompleteEventArgs      (.Status: int)
+        _ba.DetectComplete += OnDetectComplete;
+        _ba.PlanComplete += OnPlanComplete;
         _ba.ExecuteMsiMessage += OnExecuteMsiMessage;
         _ba.Progress += OnProgress;
         _ba.ApplyComplete += OnApplyComplete;
@@ -85,6 +89,11 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             CurrentPage = new WelcomePage { DataContext = this };
         }
+
+        // Burn lifecycle requires Detect to be invoked after BA startup.
+        // Without this, the engine sits in an undefined state and Plan/Apply
+        // will not produce package events.
+        _engine.Detect();
     }
 
     private string LoadEmbeddedLicense()
@@ -142,6 +151,32 @@ public sealed class MainViewModel : INotifyPropertyChanged
             catch { /* best effort */ }
         }
         RequestClose?.Invoke();
+    }
+
+    private void OnDetectComplete(object? sender, DetectCompleteEventArgs e)
+    {
+        // Detect is required before Plan/Apply. We don't gate UI on Detect's
+        // status in v0.2.0 — the welcome/uninstall pages are already shown and
+        // the user-driven Install/Uninstall buttons are the natural advance to
+        // the Plan phase.
+    }
+
+    private void OnPlanComplete(object? sender, PlanCompleteEventArgs e)
+    {
+        // PlanComplete -> Apply. This is the actual "run msiexec" step;
+        // without it the Progress page hangs forever.
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            if (e.Status >= 0)
+            {
+                _engine.Apply(IntPtr.Zero);
+            }
+            else
+            {
+                StatusText = $"Planning failed with code 0x{e.Status:X8}. The Burn log directory may contain details.";
+                CurrentPage = new ErrorPage { DataContext = this };
+            }
+        });
     }
 
     private void OnExecuteMsiMessage(object? sender, ExecuteMsiMessageEventArgs e)
