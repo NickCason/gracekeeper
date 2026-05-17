@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.2.0] - YYYY-MM-DD
+## [0.2.0] - 2026-05-17
 
 ### Changed
 - **Installer rework.** Distribution is now a Burn bootstrapper EXE (`GraceKeeper-0.2.0.exe`) with a custom WPF UI instead of the WixUI_Minimal MSI dialog set. Same dark crimson visual language across welcome, progress, finish, and uninstall pages.
