@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
-     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="GraceKeeper"
            Manufacturer="Nick Cason"
            Version="$(Version)"
@@ -9,6 +10,12 @@
            InstallerVersion="500">
 
     <MediaTemplate EmbedCab="yes"/>
+
+    <WixVariable Id="WixUIBannerBmp" Value="Branding\banner.bmp"/>
+    <WixVariable Id="WixUIDialogBmp" Value="Branding\sidebar.bmp"/>
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf"/>
+
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLDIR"/>
 
     <Icon Id="appicon.ico" SourceFile="..\src\GraceKeeper.UI\Resources\gracekeeper.ico"/>
 
