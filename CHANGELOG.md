@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - YYYY-MM-DD
+
+### Changed
+- **Installer rework.** Distribution is now a Burn bootstrapper EXE (`GraceKeeper-0.2.0.exe`) with a custom WPF UI instead of the WixUI_Minimal MSI dialog set. Same dark crimson visual language across welcome, progress, finish, and uninstall pages.
+- **Uninstall UX.** Uninstalling from Apps & Features now opens the same custom UI for confirmation, with an optional "Remove all data" checkbox to also delete `%ProgramData%\GraceKeeper\`.
+
+### Fixed
+- **Dismisser fails to start at install time.** rc3 attempted a `schtasks /Create /IT` trampoline in a custom action; it did not reliably produce a running `AutoHotkey64.exe`. The bootstrapper now launches the dashboard directly from its user-context process on the Finish page, and the dashboard owns the dismisser lifecycle from that point on. No logout+login required.
+- **Dead dismisser stays dead.** The supervisor in `GraceKeeper.Core` is now wired up: a 30-second timer in the dashboard process detects a missing or wrong-process `AutoHotkey64.exe` and respawns it, with full disambiguation via install-path and command-line match so unrelated AHK scripts the user runs are never touched.
+
+### Removed
+- `LaunchDismisser`, `LaunchDashboard`, and `StopDashboard` custom actions in the MSI (no longer needed — the bootstrapper owns post-install launch, dashboard owns dismisser).
+- Duplicate `GraceKeeperDismisser` HKLM Run entry (dashboard now spawns dismisser).
+
+## [0.1.0] - 2026-05-16
+
 ### Fixed
 - Dismisser crashed with "Target window not found" when no window had focus at the moment a popup was dismissed. Wrap `WinGetID("A")` in `try`.
 - Dismisser now starts automatically at install completion instead of waiting for next user login. (rc2 required logout+login or manual launch.)

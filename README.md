@@ -6,7 +6,7 @@ GraceKeeper keeps the FactoryTalk Activation grace period alive on workstations 
 
 ## Install
 
-Download the latest MSI from [Releases](../../releases/latest) and double-click. Requires admin rights. Per-machine install to `C:\Program Files\GraceKeeper\`.
+Download `GraceKeeper-<version>.exe` from [Releases](../../releases/latest) and double-click. Windows will show a SmartScreen warning the first time — click "More info" → "Run anyway." (Code signing is planned for a future release.) Requires admin rights; installs per-machine to `C:\Program Files\GraceKeeper\`.
 
 ## What it does
 
@@ -30,7 +30,7 @@ The window follows Windows light/dark theme automatically.
 
 ## Uninstall
 
-Standard Windows uninstall via `Settings → Apps`. Removes scheduled task, registry entries, install dir, and `%ProgramData%\GraceKeeper\`.
+Standard Windows uninstall via `Settings → Apps`. The same Setup UI opens, asks for confirmation, and optionally removes your local data (`%ProgramData%\GraceKeeper\`).
 
 ## Building from source
 
