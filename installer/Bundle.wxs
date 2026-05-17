@@ -10,7 +10,7 @@
           DisableModify="yes"
           AboutUrl="https://github.com/ncason/gracekeeper">
 
-    <BootstrapperApplication>
+    <BootstrapperApplication SourceFile="$(mbanative)">
       <bal:WixManagedBootstrapperApplicationHost
           AssemblyFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\GraceKeeper.Bootstrapper.dll"/>
       <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\BootstrapperCore.config"/>
@@ -24,8 +24,7 @@
                   Vital="yes"
                   Compressed="yes"
                   Visible="no"
-                  ForcePerMachine="yes"
-                  DisplayInternalUI="no"/>
+                  ForcePerMachine="yes"/>
     </Chain>
   </Bundle>
 </Wix>
