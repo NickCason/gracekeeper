@@ -10,15 +10,19 @@
           DisableModify="yes"
           AboutUrl="https://github.com/ncason/gracekeeper">
 
-    <BootstrapperApplication SourceFile="$(mbanative)">
-      <bal:WixManagedBootstrapperApplicationHost
-          AssemblyFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\GraceKeeper.Bootstrapper.dll"/>
+    <BootstrapperApplication>
+      <bal:WixManagedBootstrapperApplicationHost />
+      <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\GraceKeeper.Bootstrapper.dll"
+               bal:BAFactoryAssembly="yes"/>
       <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Host.config"/>
       <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Core.dll"/>
+      <Payload SourceFile="$(mbanative)" Name="mbanative.dll"/>
       <Payload SourceFile="..\LICENSE"/>
     </BootstrapperApplication>
 
     <Chain>
+      <!-- Managed BA host requires .NET Framework 4.8; install on demand if absent. -->
+      <PackageGroupRef Id="NetFx48WebAsPrereq"/>
       <MsiPackage Id="GraceKeeperMsi"
                   SourceFile="bin\dev\GraceKeeper-$(Version).msi"
                   Vital="yes"
