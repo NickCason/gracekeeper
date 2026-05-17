@@ -10,8 +10,6 @@ public partial class App : Application
     private TaskbarIcon? _tray;
     private ThemeMonitor? _themeMonitor;
     private MainWindow? _mainWindow;
-    private System.Windows.Threading.DispatcherTimer? _supervisorTimer;
-    private GraceKeeper.Core.DismisserSupervisor? _supervisor;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -21,15 +19,11 @@ public partial class App : Application
 
         _tray = (TaskbarIcon)FindResource("TrayIcon");
 
-        // Supervisor watches the dismisser; relaunch if it dies
-        _supervisor = new GraceKeeper.Core.DismisserSupervisor(
-            "popup-dismisser.exe",
-            System.AppContext.BaseDirectory);
-        _supervisorTimer = new System.Windows.Threading.DispatcherTimer
-            { Interval = System.TimeSpan.FromSeconds(10) };
-        _supervisorTimer.Tick += (_, _) => _supervisor.CheckOnce();
-        _supervisorTimer.Start();
-        _supervisor.CheckOnce();
+        // Supervisor for the AHK dismisser is unwired in v1: since the dismisser
+        // runs via `AutoHotkey64.exe popup-dismisser.ahk`, we'd need PID/command-line
+        // tracking to distinguish our script from any other AHK script the user
+        // happens to be running. If the dismisser crashes, logging out + back in
+        // restarts it via HKLM Run. DismisserSupervisor in Core stays for v2.
 
         // Best-effort update check: once per launch, max once per 24h. Silent on failure.
         _ = System.Threading.Tasks.Task.Run(async () =>
