@@ -48,7 +48,20 @@ jobs:
           wix --version
           wix eula accept wix7
           wix extension add --global WixToolset.Util.wixext
-          wix extension add --global WixToolset.UI.wixext
+          wix extension add --global WixToolset.Bal.wixext
+          # Workaround for WiX 7 Bal extension packaging: the downloaded DLL is named
+          # WixToolset.BootstrapperApplications.wixext.dll but wix looks for WixToolset.Bal.wixext.dll.
+          $cache = "$env:USERPROFILE\.wix\extensions\WixToolset.Bal.wixext"
+          if (Test-Path $cache) {
+            $actualDll = Get-ChildItem -Path $cache -Recurse -Filter "WixToolset.BootstrapperApplications.wixext.dll" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($actualDll) {
+              $expectedPath = Join-Path $actualDll.Directory.FullName "WixToolset.Bal.wixext.dll"
+              if (-not (Test-Path $expectedPath)) {
+                Copy-Item $actualDll.FullName $expectedPath -Force
+                Write-Host "Renamed Bal DLL: $($actualDll.FullName) -> WixToolset.Bal.wixext.dll"
+              }
+            }
+          }
           wix extension list --global
 
       - name: Run Pester tests
@@ -71,25 +84,32 @@ jobs:
           New-Item -ItemType Directory -Path installer/staging -Force | Out-Null
           Copy-Item $env:AHK64 installer/staging/AutoHotkey64.exe -Force
 
-      - name: Build MSI
+      - name: Build inner MSI
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path installer/bin/dev -Force | Out-Null
+          cd installer
+          wix build Product.wxs -d Version=${{ steps.ver.outputs.version }} -ext WixToolset.Util.wixext -arch x64 -o bin/dev/GraceKeeper-${{ steps.ver.outputs.version }}.msi
+
+      - name: Build Burn bundle
         shell: pwsh
         run: |
           cd installer
-          wix build Product.wxs -d Version=${{ steps.ver.outputs.version }} -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext -arch x64 -o GraceKeeper-${{ steps.ver.outputs.version }}.msi
-          Get-Item GraceKeeper-${{ steps.ver.outputs.version }}.msi | Select-Object Name, Length
+          wix build Bundle.wxs -d Version=${{ steps.ver.outputs.version }} -ext WixToolset.Util.wixext -ext WixToolset.Bal.wixext -arch x64 -o ../GraceKeeper-${{ steps.ver.outputs.version }}.exe
+          Get-Item ../GraceKeeper-${{ steps.ver.outputs.version }}.exe | Select-Object Name, Length
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           name: GraceKeeper ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
-          files: installer/GraceKeeper-${{ steps.ver.outputs.version }}.msi
+          files: GraceKeeper-${{ steps.ver.outputs.version }}.exe
           body: |
             ## GraceKeeper ${{ github.ref_name }}
 
             FactoryTalk grace-period automation for Rockwell SIs.
 
-            Download the MSI below and double-click to install (per-machine, requires admin).
+            Download `GraceKeeper-${{ steps.ver.outputs.version }}.exe` below and double-click to install (per-machine, requires admin). Windows will show a SmartScreen warning on first install — click "More info" → "Run anyway." Code signing is planned for a future release.
 
             See the [README](https://github.com/${{ github.repository }}/blob/master/README.md) for what it does.
           draft: false
