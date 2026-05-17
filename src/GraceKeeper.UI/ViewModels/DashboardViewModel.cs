@@ -24,6 +24,13 @@ public sealed class DashboardViewModel : ObservableObject
     private int _filesToday;
     private string _statusText = "Healthy";
     private string _timeSinceLastCleanText = "no runs yet";
+    private CleanerButtonState _cleanerState = CleanerButtonState.Idle;
+
+    public CleanerButtonState CleanerState
+    {
+        get => _cleanerState;
+        private set => Set(ref _cleanerState, value);
+    }
 
     public long PopupsDismissedLifetime { get => _popupsDismissedLifetime; private set => Set(ref _popupsDismissedLifetime, value); }
     public long RnlFilesDeletedLifetime { get => _rnlFilesDeletedLifetime; private set => Set(ref _rnlFilesDeletedLifetime, value); }
@@ -99,7 +106,38 @@ public sealed class DashboardViewModel : ObservableObject
         return "just now";
     }
 
-    public async Task RunCleanerNowAsync() => await _scheduler.RunNowAsync();
+    public async Task RunCleanerNowAsync()
+    {
+        if (CleanerState != CleanerButtonState.Idle) return;
+
+        var cfg = _configStore.Load();
+        var startOffset = cfg.LogOffsets.CleanerLogOffset;
+
+        CleanerState = CleanerButtonState.Running;
+        try
+        {
+            await _scheduler.RunNowAsync();
+
+            var watcher = new CleanerCompletionWatcher(PathResolver.CleanerLogPath);
+            var result = await watcher.WaitAsync(startOffset, TimeSpan.FromSeconds(60), default);
+
+            if (result == CleanerCompletionResult.Completed)
+            {
+                CleanerState = CleanerButtonState.Done;
+                await Task.Delay(1200);
+                CleanerState = CleanerButtonState.Idle;
+            }
+            else
+            {
+                // timed out — fall back to Idle (don't claim success)
+                CleanerState = CleanerButtonState.Idle;
+            }
+        }
+        catch
+        {
+            CleanerState = CleanerButtonState.Idle;
+        }
+    }
 
     public void TogglePause()
     {
@@ -107,4 +145,11 @@ public sealed class DashboardViewModel : ObservableObject
         else _sentinel.Disable();
         StatusText = _sentinel.IsDisabled ? "Paused" : "Healthy";
     }
+}
+
+public enum CleanerButtonState
+{
+    Idle,
+    Running,
+    Done,
 }

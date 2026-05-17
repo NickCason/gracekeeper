@@ -9,6 +9,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
 using GraceKeeper.Bootstrapper.Views;
+using GraceKeeper.Core;
 using WixToolset.Mba.Core;
 
 namespace GraceKeeper.Bootstrapper.ViewModels;
@@ -28,6 +29,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _version = "";
     private string _licenseText = "";
     private bool _removeAllData;
+    private double _smoothedPercent;
+    private bool _isRunning;
+    private readonly PhaseProgressTracker _tracker;
 
     public event Action? RequestClose;
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -35,12 +39,54 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public UserControl? CurrentPage { get => _currentPage; set { _currentPage = value; OnPropertyChanged(); } }
     public bool AcceptedLicense { get => _acceptedLicense; set { _acceptedLicense = value; OnPropertyChanged(); ((RelayCommand)InstallCommand).RaiseCanExecuteChanged(); } }
     public bool LaunchOnFinish { get => _launchOnFinish; set { _launchOnFinish = value; OnPropertyChanged(); } }
-    public int Percent { get => _percent; set { _percent = value; OnPropertyChanged(); } }
+    public int Percent
+    {
+        get => _percent;
+        set
+        {
+            _percent = value;
+            OnPropertyChanged();
+            AnimateSmoothedPercent(value);
+        }
+    }
     public string StatusText { get => _statusText; set { _statusText = value; OnPropertyChanged(); } }
     public string TimeRemaining { get => _timeRemaining; set { _timeRemaining = value; OnPropertyChanged(); } }
     public string Version { get => _version; set { _version = value; OnPropertyChanged(); } }
     public string LicenseText { get => _licenseText; set { _licenseText = value; OnPropertyChanged(); } }
     public bool RemoveAllData { get => _removeAllData; set { _removeAllData = value; OnPropertyChanged(); } }
+    public double SmoothedPercent { get => _smoothedPercent; private set { _smoothedPercent = value; OnPropertyChanged(); } }
+    public bool IsRunning { get => _isRunning; private set { _isRunning = value; OnPropertyChanged(); } }
+    public System.Collections.ObjectModel.ObservableCollection<PhaseRow> Phases => _tracker.Phases;
+
+    private void AnimateSmoothedPercent(int target)
+    {
+        var startValue = _smoothedPercent;        // capture once — _smoothedPercent mutates each tick
+        var durationMs = 1200.0;
+        var easing = new System.Windows.Media.Animation.CubicEase
+        {
+            EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut,
+        };
+        var anim = new System.Windows.Media.Animation.DoubleAnimation
+        {
+            From = startValue,
+            To = target,
+            Duration = new System.Windows.Duration(System.TimeSpan.FromMilliseconds(durationMs)),
+            EasingFunction = easing,
+            FillBehavior = System.Windows.Media.Animation.FillBehavior.HoldEnd,
+        };
+        var clock = anim.CreateClock();
+        clock.CurrentTimeInvalidated += (_, _) =>
+        {
+            if (clock.CurrentTime is System.TimeSpan ct)
+            {
+                var fraction = ct.TotalMilliseconds / durationMs;
+                if (fraction > 1) fraction = 1;
+                var eased = easing.Ease(fraction);
+                SmoothedPercent = startValue + (target - startValue) * eased;
+            }
+        };
+        clock.Controller?.Begin();
+    }
 
     public ICommand InstallCommand { get; }
     public ICommand UninstallCommand { get; }
@@ -71,6 +117,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _ba.ExecuteMsiMessage += OnExecuteMsiMessage;
         _ba.Progress += OnProgress;
         _ba.ApplyComplete += OnApplyComplete;
+
+        _tracker = new PhaseProgressTracker(new[] { "Preparing", "Installing", "Finishing" });
     }
 
     public void Initialize()
@@ -112,6 +160,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         CurrentPage = new ProgressPage { DataContext = this };
         StatusText = "Removing GraceKeeper…";
+        IsRunning = true;
+        _tracker.Begin();
         _engine.Plan(LaunchAction.Uninstall);
     }
 
@@ -119,6 +169,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         CurrentPage = new ProgressPage { DataContext = this };
         StatusText = "Preparing…";
+        IsRunning = true;
+        _tracker.Begin();
         _engine.Plan(LaunchAction.Install);
     }
 
@@ -189,11 +241,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 var hwnd = Application.Current.MainWindow != null
                     ? new WindowInteropHelper(Application.Current.MainWindow).Handle
                     : IntPtr.Zero;
+                _tracker.Advance();
                 _engine.Apply(hwnd);
             }
             else
             {
                 StatusText = $"Planning failed with code 0x{e.Status:X8}. The Burn log directory may contain details.";
+                IsRunning = false;
                 CurrentPage = new ErrorPage { DataContext = this };
             }
         });
@@ -209,7 +263,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         // ProgressEventArgs.OverallPercentage confirmed in 4.0.6 via reflection.
         var p = e.OverallPercentage;
-        Application.Current.Dispatcher.Invoke(() => Percent = p);
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            Percent = p;
+            if (p >= 100 && _tracker.Phases[1].State == PhaseState.Active)
+            {
+                _tracker.Advance();  // Installing -> Done, Finishing -> Active
+            }
+        });
     }
 
     private void OnApplyComplete(object? sender, ApplyCompleteEventArgs e)
@@ -219,6 +280,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             if (e.Status >= 0)
             {
+                _tracker.Complete();
+                IsRunning = false;
                 if (_command.Action == LaunchAction.Uninstall)
                 {
                     if (RemoveAllData)
@@ -241,6 +304,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             else
             {
                 StatusText = $"Operation failed with code 0x{e.Status:X8}. The Burn log directory may contain details.";
+                IsRunning = false;
                 CurrentPage = new ErrorPage { DataContext = this };
             }
         });

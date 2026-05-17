@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:vm="clr-namespace:GraceKeeper.UI.ViewModels"
       xmlns:conv="clr-namespace:GraceKeeper.UI.Converters"
+      xmlns:ctl="clr-namespace:GraceKeeper.UI.Controls"
       Background="{DynamicResource Bg.Page}"
       Foreground="{DynamicResource Text.Primary}">
     <Page.DataContext>
@@ -31,7 +32,30 @@
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Ellipse Width="8" Height="8"
                              Fill="{Binding StatusText, Converter={StaticResource HealthToColor}}"
-                             VerticalAlignment="Center" Margin="0,0,6,0"/>
+                             VerticalAlignment="Center" Margin="0,0,6,0">
+                        <Ellipse.Style>
+                            <Style TargetType="Ellipse">
+                                <Setter Property="Opacity" Value="1.0"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding StatusText}" Value="Healthy">
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Name="PulseStory">
+                                                <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                                                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                     From="1.0" To="0.7"
+                                                                     Duration="{StaticResource Duration.Pulse}"
+                                                                     EasingFunction="{StaticResource Easing.Standard}"/>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </DataTrigger.EnterActions>
+                                        <DataTrigger.ExitActions>
+                                            <StopStoryboard BeginStoryboardName="PulseStory"/>
+                                        </DataTrigger.ExitActions>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Ellipse.Style>
+                    </Ellipse>
                     <TextBlock Text="{Binding StatusText}" FontSize="11"
                                VerticalAlignment="Center"
                                Foreground="{Binding StatusText, Converter={StaticResource HealthToColor}}"/>
@@ -41,8 +65,7 @@
 
         <!-- Action row pinned to bottom -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
-            <Button Content="Run cleaner now" Background="{DynamicResource Brand.Red}" Foreground="White"
-                    Padding="14,8" BorderThickness="0" Click="RunCleaner_Click"/>
+            <ctl:RunCleanerButton State="{Binding CleanerState}" Click="RunCleaner_Click"/>
             <Button Content="Pause" Background="{DynamicResource Button.SecondaryBg}"
                     Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
                     BorderBrush="{DynamicResource Border.Default}" Click="Pause_Click"/>
@@ -64,10 +87,15 @@
                         CornerRadius="8" Padding="14" Margin="0,0,5,0">
                     <Border BorderBrush="{DynamicResource Brand.Red}" BorderThickness="3,0,0,0" Padding="6,0,0,0">
                         <StackPanel>
-                            <TextBlock Text="{Binding PopupsDismissedLifetime}" FontSize="28" FontWeight="SemiBold"/>
+                            <ctl:AnimatedCounter Value="{Binding PopupsDismissedLifetime}" FontSize="28" FontWeight="SemiBold"/>
                             <TextBlock Text="Popups dismissed" FontSize="11" Foreground="{DynamicResource Text.Muted}"/>
-                            <TextBlock Text="{Binding PopupsToday, StringFormat='+{0} today'}" FontSize="11"
-                                       Foreground="{DynamicResource Semantic.Good}" Margin="0,5,0,0"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                <TextBlock Text="+" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                                <ctl:AnimatedCounter Value="{Binding PopupsToday}" FontSize="11"
+                                                     Foreground="{DynamicResource Semantic.Good}"
+                                                     RollDuration="0:0:0.6"/>
+                                <TextBlock Text=" today" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                            </StackPanel>
                         </StackPanel>
                     </Border>
                 </Border>
@@ -75,10 +103,15 @@
                         BorderBrush="{DynamicResource Border.Default}" BorderThickness="1"
                         CornerRadius="8" Padding="14" Margin="5,0,5,0">
                     <StackPanel>
-                        <TextBlock Text="{Binding RnlFilesDeletedLifetime}" FontSize="28" FontWeight="SemiBold"/>
+                        <ctl:AnimatedCounter Value="{Binding RnlFilesDeletedLifetime}" FontSize="28" FontWeight="SemiBold"/>
                         <TextBlock Text=".rnl files deleted" FontSize="11" Foreground="{DynamicResource Text.Muted}"/>
-                        <TextBlock Text="{Binding FilesToday, StringFormat='+{0} today'}" FontSize="11"
-                                   Foreground="{DynamicResource Semantic.Good}" Margin="0,5,0,0"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                            <TextBlock Text="+" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                            <ctl:AnimatedCounter Value="{Binding FilesToday}" FontSize="11"
+                                                 Foreground="{DynamicResource Semantic.Good}"
+                                                 RollDuration="0:0:0.6"/>
+                            <TextBlock Text=" today" FontSize="11" Foreground="{DynamicResource Semantic.Good}"/>
+                        </StackPanel>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Background="{DynamicResource Bg.Surface}"
@@ -98,6 +131,32 @@
                     <TextBlock Text="RECENT ACTIVITY" FontSize="10" FontWeight="SemiBold"
                                Foreground="{DynamicResource Text.Muted}" Margin="0,0,0,8"/>
                     <ItemsControl ItemsSource="{Binding RecentActivity}" MaxHeight="240">
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter">
+                                <Setter Property="Opacity" Value="0"/>
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform Y="-8"/>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                 From="0" To="1"
+                                                                 Duration="{StaticResource Duration.Standard}"
+                                                                 EasingFunction="{StaticResource Easing.Standard}"/>
+                                                <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                                                 From="-8" To="0"
+                                                                 Duration="{StaticResource Duration.Slow}"
+                                                                 EasingFunction="{StaticResource Easing.Standard}"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
                         <ItemsControl.Template>
                             <ControlTemplate TargetType="ItemsControl">
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">

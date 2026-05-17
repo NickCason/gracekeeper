@@ -44,6 +44,20 @@ Before cutting a release tag, verify on a clean VM snapshot.
 - [ ] **Detached-child survival:** kill `GraceKeeper.exe` via Task Manager. `AutoHotkey64.exe` stays alive (it's a detached child, not killed with the dashboard). Relaunch the dashboard from the Start Menu. `supervisor.log` records `adopted existing dismisser pid=...`.
 - [ ] `%ProgramData%\GraceKeeper\dismisser-pid.json` exists and contains a JSON record with the current AHK PID, exe path, script path, and start time
 
+## Animation polish (v0.3.0)
+
+- [ ] **Dashboard counter roll:** On dashboard open, the two large counters (Popups dismissed, .rnl files deleted) animate from 0 to their stored values over ~1.2s with an eased finish. They do not snap.
+- [ ] **Dashboard counter live increment:** With a popup dismissed externally, the "Popups dismissed" counter ticks up smoothly (does not flicker or snap).
+- [ ] **Activity log slide-in:** New `dismiss` / `clean` rows fade in and slide down 8px on appearance, one after another, not all at once.
+- [ ] **Status pill pulse:** When status is Healthy, the green dot's opacity gently pulses (1.0 ↔ 0.7 over ~1.6s, autoreversing). When status changes to Paused, the pulse stops and the dot is static.
+- [ ] **Run cleaner button morph:** Click "Run cleaner now"; the button label changes to "Cleaning…" with a rotating spinner. On completion, it briefly flashes green with "Done ✓" before reverting to default (~1.2s).
+- [ ] **Run cleaner timeout fallback:** If the cleaner fails to log a completion within 60s, the button reverts to Idle without showing "Done" (we do not lie about success).
+- [ ] **Installer progress smoothness:** Run the installer. The progress bar visibly tweens between Burn's percentage updates — it does not teleport from 0 → 50 → 100.
+- [ ] **Installer shimmer:** A subtle moving highlight travels left-to-right across the progress bar while installation is running. Shimmer disappears when ApplyComplete fires.
+- [ ] **Installer phase list:** Below the bar, three rows appear (Preparing, Installing, Finishing). Each row transitions: pending dot → active spinner → checkmark, in lockstep with Burn lifecycle events.
+- [ ] **Welcome cascade:** On installer launch, the hero line "Keep the grace period alive." animates in word-by-word with a small downward fade, 60ms apart.
+- [ ] **Page transition:** Switching from Welcome → Progress → Finish, each new page fades in with a 6px upward slide. No flash, no abrupt swap.
+
 ## Uninstall behavior
 
 - [ ] Settings → Apps → GraceKeeper → Uninstall (or run `GraceKeeper-<ver>.exe /uninstall` directly). The same custom UI opens asking for confirmation.
