@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install AutoHotkey v2 (for the bundled runtime)
+        shell: pwsh
+        run: |
+          choco install autohotkey -y --no-progress
+          # Verify the runtime exe is where we expect it
+          $ahkPath = "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
+          if (-not (Test-Path $ahkPath)) {
+              # Choco sometimes installs to a different path; search.
+              $candidates = Get-ChildItem -Path "C:\Program Files\AutoHotkey" -Recurse -Filter "AutoHotkey64.exe" -ErrorAction SilentlyContinue
+              if ($candidates) {
+                  $ahkPath = $candidates[0].FullName
+                  Write-Host "Found AutoHotkey64.exe at: $ahkPath"
+              } else {
+                  throw "AutoHotkey64.exe not found after install"
+              }
+          }
+          # Persist the path for downstream steps
+          "AHK64=$ahkPath" >> $env:GITHUB_ENV
+
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          wix extension add WixToolset.Util.wixext
+          wix extension add WixToolset.UI.wixext
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0.0
+          Invoke-Pester tests/ -CI
+
+      - name: Build solution
+        shell: pwsh
+        run: dotnet build src/GraceKeeper.sln -c Release
+
+      - name: Run xUnit tests
+        shell: pwsh
+        run: dotnet test src/GraceKeeper.Core.Tests/GraceKeeper.Core.Tests.csproj -c Release --no-build
+
+      - name: Stage AHK runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path installer/staging -Force | Out-Null
+          Copy-Item $env:AHK64 installer/staging/AutoHotkey64.exe -Force
+          Get-Item installer/staging/AutoHotkey64.exe | Select-Object Name, Length
+
+      - name: Build MSI (sanity check, not uploaded)
+        shell: pwsh
+        run: |
+          cd installer
+          wix build Product.wxs -d Version=0.0.0-ci -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext -arch x64 -o GraceKeeper-ci.msi
+          Get-Item GraceKeeper-ci.msi | Select-Object Length
+
+      - name: Upload MSI as build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GraceKeeper-CI-MSI
+          path: installer/GraceKeeper-ci.msi
+          retention-days: 7
