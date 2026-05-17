@@ -113,12 +113,16 @@
     </ComponentGroup>
 
     <ComponentGroup Id="ProgramDataComponents">
-      <Component Id="ConfigJson" Directory="GK_PROGRAMDATA" Guid="*">
+      <!-- Permanent="yes": MSI creates these on install but never removes them
+           on uninstall. The BA's UninstallConfirm "Remove all data" path is
+           responsible for deleting %ProgramData%\GraceKeeper when the user
+           opts in. See spec docs/superpowers/specs/2026-05-16-v0.2.0-installer-bootstrapper-design.md. -->
+      <Component Id="ConfigJson" Directory="GK_PROGRAMDATA" Guid="*" Permanent="yes">
         <File Source="default-config.json" Id="config.json" Name="config.json" KeyPath="yes">
           <util:PermissionEx User="Users" GenericAll="yes"/>
         </File>
       </Component>
-      <Component Id="LogsDir" Directory="GK_LOGS" Guid="B1C2D3E4-F5A6-4789-B012-3456789ABCDF">
+      <Component Id="LogsDir" Directory="GK_LOGS" Guid="B1C2D3E4-F5A6-4789-B012-3456789ABCDF" Permanent="yes">
         <CreateFolder>
           <util:PermissionEx User="Users" GenericAll="yes"/>
         </CreateFolder>
