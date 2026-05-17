@@ -9,6 +9,32 @@
         FontFamily="Segoe UI"
         Foreground="{StaticResource Text}">
   <Grid>
-    <ContentControl Content="{Binding CurrentPage}"/>
+    <ContentControl Content="{Binding CurrentPage}">
+      <ContentControl.Template>
+        <ControlTemplate TargetType="ContentControl">
+          <ContentPresenter x:Name="Presenter" Opacity="0">
+            <ContentPresenter.RenderTransform>
+              <TranslateTransform Y="6"/>
+            </ContentPresenter.RenderTransform>
+            <ContentPresenter.Triggers>
+              <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                <BeginStoryboard>
+                  <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                     From="0" To="1"
+                                     Duration="{StaticResource Duration.Standard}"
+                                     EasingFunction="{StaticResource Easing.Standard}"/>
+                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                     From="6" To="0"
+                                     Duration="{StaticResource Duration.Standard}"
+                                     EasingFunction="{StaticResource Easing.Standard}"/>
+                  </Storyboard>
+                </BeginStoryboard>
+              </EventTrigger>
+            </ContentPresenter.Triggers>
+          </ContentPresenter>
+        </ControlTemplate>
+      </ContentControl.Template>
+    </ContentControl>
   </Grid>
 </Window>
