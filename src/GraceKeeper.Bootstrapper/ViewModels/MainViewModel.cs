@@ -143,17 +143,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         if (LaunchOnFinish)
         {
-            // Prefer the bundle's InstallFolder variable (declared in Bundle.wxs
-            // to mirror the inner MSI's INSTALLDIR). Fall back to the
-            // ProgramFiles + "GraceKeeper" convention if the lookup fails for
-            // any reason (variable missing on rollback, engine in an odd state).
+            // The InstallFolder bundle variable is declared in Bundle.wxs with
+            // value "[ProgramFiles64Folder]GraceKeeper\". GetVariableString
+            // returns that LITERAL string; FormatString is what expands the
+            // [X] reference. Call FormatString to get a real path. Fall back
+            // to %ProgramFiles%\GraceKeeper if the engine throws or the
+            // result still contains unexpanded brackets.
             try
             {
                 string installDir;
-                try { installDir = _engine.GetVariableString("InstallFolder"); }
-                catch { installDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GraceKeeper"); }
-                if (string.IsNullOrWhiteSpace(installDir))
+                try
+                {
+                    installDir = _engine.FormatString("[InstallFolder]");
+                    if (string.IsNullOrWhiteSpace(installDir) || installDir.Contains("["))
+                        installDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GraceKeeper");
+                }
+                catch
+                {
                     installDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "GraceKeeper");
+                }
                 Process.Start(Path.Combine(installDir.TrimEnd('\\'), "GraceKeeper.exe"));
             }
             catch { /* best effort — if it fails, HKLM Run picks it up at next login */ }
