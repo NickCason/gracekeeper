@@ -31,8 +31,17 @@ public partial class App : Application
     private void TrayIcon_DoubleClick(object sender, RoutedEventArgs e) => ShowMainWindow();
     private void OpenWindow_Click(object sender, RoutedEventArgs e) => ShowMainWindow();
     private void OpenSettings_Click(object sender, RoutedEventArgs e) { ShowMainWindow(); _mainWindow!.NavigateToSettings(); }
-    private void Pause_Click(object sender, RoutedEventArgs e) { /* wired in Task 3.7 */ }
-    private void RunCleanerNow_Click(object sender, RoutedEventArgs e) { /* wired in Task 3.7 */ }
+    private void Pause_Click(object sender, RoutedEventArgs e)
+    {
+        var sentinel = new GraceKeeper.Core.DisabledSentinel(GraceKeeper.Core.PathResolver.DisabledSentinelPath);
+        if (sentinel.IsDisabled) sentinel.Enable(); else sentinel.Disable();
+    }
+
+    private async void RunCleanerNow_Click(object sender, RoutedEventArgs e)
+    {
+        var scheduler = new GraceKeeper.Core.ScheduledTaskClient("GraceKeeper - Cleanup RNL");
+        try { await scheduler.RunNowAsync(); } catch { /* task may not exist yet */ }
+    }
     private void Exit_Click(object sender, RoutedEventArgs e) => Shutdown();
 
     private void ShowMainWindow()
