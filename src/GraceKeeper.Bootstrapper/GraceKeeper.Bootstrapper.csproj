@@ -22,6 +22,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- App.xaml auto-classified as ApplicationDefinition is forbidden in Library projects.
+         Remove it from both buckets and keep it as None (theme loaded via pack URI in code). -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Remove="App.xaml" />
+    <None Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="BootstrapperCore.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
