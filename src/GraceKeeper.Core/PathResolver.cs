@@ -13,4 +13,6 @@ public static class PathResolver
     public static string DismisserLogPath => Path.Combine(LogsDir, "dismisser.log");
     public static string CleanerLogPath => Path.Combine(LogsDir, "cleaner.log");
     public static string DisabledSentinelPath => Path.Combine(ProgramDataRoot, "DISABLED");
+    public static string SupervisorLogPath => Path.Combine(LogsDir, "supervisor.log");
+    public static string DismisserPidFilePath => Path.Combine(ProgramDataRoot, "dismisser-pid.json");
 }
