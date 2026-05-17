@@ -22,6 +22,11 @@
                bal:BAFactoryAssembly="yes"/>
       <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Host.config"/>
       <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Core.dll"/>
+      <!-- Core is referenced by the BA (PhaseProgressTracker for the installer
+           phase checklist). Only PhaseProgressTracker / PhaseRow / PhaseState
+           are exercised in the BA; the rest of Core's transitive shim DLLs are
+           not needed at runtime by this code path. -->
+      <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\GraceKeeper.Core.dll"/>
       <Payload SourceFile="$(mbanative)" Name="mbanative.dll"/>
       <Payload SourceFile="..\LICENSE"/>
     </BootstrapperApplication>
