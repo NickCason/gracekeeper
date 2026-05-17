@@ -10,6 +10,12 @@
           DisableModify="yes"
           AboutUrl="https://github.com/ncason/gracekeeper">
 
+    <!-- Bundle-level mirror of the inner MSI's INSTALLDIR. Burn does not
+         flow MSI properties back to the bundle by default, so the BA looks
+         this variable up on Finish to launch the dashboard. bal:Overridable
+         lets a CLI invocation (e.g. silent reinstall) pass a custom folder. -->
+    <Variable Name="InstallFolder" Type="string" Value="[ProgramFiles64Folder]GraceKeeper\" bal:Overridable="yes"/>
+
     <BootstrapperApplication>
       <bal:WixManagedBootstrapperApplicationHost />
       <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\GraceKeeper.Bootstrapper.dll"
