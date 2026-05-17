@@ -65,8 +65,7 @@
 
         <!-- Action row pinned to bottom -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
-            <Button Content="Run cleaner now" Background="{DynamicResource Brand.Red}" Foreground="White"
-                    Padding="14,8" BorderThickness="0" Click="RunCleaner_Click"/>
+            <ctl:RunCleanerButton State="{Binding CleanerState}" Click="RunCleaner_Click"/>
             <Button Content="Pause" Background="{DynamicResource Button.SecondaryBg}"
                     Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
                     BorderBrush="{DynamicResource Border.Default}" Click="Pause_Click"/>
