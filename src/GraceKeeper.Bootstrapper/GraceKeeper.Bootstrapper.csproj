@@ -9,6 +9,13 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>false</UseWindowsForms>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- Explicit reproducible-build flags. The .NET SDK already defaults
+         Deterministic to true for Release, but pinning it makes intent
+         visible and survives future SDK behavior changes. PathMap strips
+         absolute developer paths so embedded sequence-point paths don't
+         leak machine-specific roots into the produced DLL. -->
+    <Deterministic>true</Deterministic>
+    <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
   </PropertyGroup>
 
   <ItemGroup>
