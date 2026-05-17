@@ -280,26 +280,42 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             if (e.Status >= 0)
             {
+                // Burn does not reliably emit a final Progress=100 event before
+                // ApplyComplete — Percent often plateaus at ~50 and we jump
+                // straight here. Set it to 100 explicitly so the smoothed bar
+                // tweens to full before the page transitions away.
+                Percent = 100;
                 _tracker.Complete();
                 IsRunning = false;
-                if (_command.Action == LaunchAction.Uninstall)
+                // Delay the page swap so the user sees the bar reach 100 and
+                // the final phase check-mark land before we navigate.
+                var delay = new System.Windows.Threading.DispatcherTimer
                 {
-                    if (RemoveAllData)
+                    Interval = System.TimeSpan.FromMilliseconds(900),
+                };
+                delay.Tick += (_, _) =>
+                {
+                    delay.Stop();
+                    if (_command.Action == LaunchAction.Uninstall)
                     {
-                        try
+                        if (RemoveAllData)
                         {
-                            var pdRoot = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
-                            var dir = System.IO.Path.Combine(pdRoot, "GraceKeeper");
-                            if (System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, recursive: true);
+                            try
+                            {
+                                var pdRoot = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                                var dir = System.IO.Path.Combine(pdRoot, "GraceKeeper");
+                                if (System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, recursive: true);
+                            }
+                            catch { /* best effort */ }
                         }
-                        catch { /* best effort */ }
+                        CurrentPage = new UninstallFinishPage { DataContext = this };
                     }
-                    CurrentPage = new UninstallFinishPage { DataContext = this };
-                }
-                else
-                {
-                    CurrentPage = new FinishPage { DataContext = this };
-                }
+                    else
+                    {
+                        CurrentPage = new FinishPage { DataContext = this };
+                    }
+                };
+                delay.Start();
             }
             else
             {
