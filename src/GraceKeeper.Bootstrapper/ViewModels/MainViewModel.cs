@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using GraceKeeper.Bootstrapper.Views;
 using WixToolset.Mba.Core;
 
@@ -163,13 +164,17 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void OnPlanComplete(object? sender, PlanCompleteEventArgs e)
     {
-        // PlanComplete -> Apply. This is the actual "run msiexec" step;
-        // without it the Progress page hangs forever.
+        // PlanComplete -> Apply. Burn rejects IntPtr.Zero as hwndParent
+        // (0x80070057 E_INVALIDARG) — supply the main window's HWND so it can
+        // parent prompts (UAC, disk-prompt, etc.) to our UI.
         Application.Current.Dispatcher.Invoke(() =>
         {
             if (e.Status >= 0)
             {
-                _engine.Apply(IntPtr.Zero);
+                var hwnd = Application.Current.MainWindow != null
+                    ? new WindowInteropHelper(Application.Current.MainWindow).Handle
+                    : IntPtr.Zero;
+                _engine.Apply(hwnd);
             }
             else
             {
