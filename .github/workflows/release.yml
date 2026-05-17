@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart('v')
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Install AutoHotkey v2
+        shell: pwsh
+        run: |
+          choco install autohotkey -y --no-progress
+          $ahkPath = "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
+          if (-not (Test-Path $ahkPath)) {
+              $candidates = Get-ChildItem -Path "C:\Program Files\AutoHotkey" -Recurse -Filter "AutoHotkey64.exe" -ErrorAction SilentlyContinue
+              if ($candidates) { $ahkPath = $candidates[0].FullName }
+              else { throw "AutoHotkey64.exe not found" }
+          }
+          "AHK64=$ahkPath" >> $env:GITHUB_ENV
+
+      - name: Install WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix
+          wix extension add WixToolset.Util.wixext
+          wix extension add WixToolset.UI.wixext
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0.0
+          Invoke-Pester tests/ -CI
+
+      - name: Build solution
+        shell: pwsh
+        run: dotnet build src/GraceKeeper.sln -c Release
+
+      - name: Run xUnit tests
+        shell: pwsh
+        run: dotnet test src/GraceKeeper.Core.Tests/GraceKeeper.Core.Tests.csproj -c Release --no-build
+
+      - name: Stage AHK runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path installer/staging -Force | Out-Null
+          Copy-Item $env:AHK64 installer/staging/AutoHotkey64.exe -Force
+
+      - name: Build MSI
+        shell: pwsh
+        run: |
+          cd installer
+          wix build Product.wxs -d Version=${{ steps.ver.outputs.version }} -ext WixToolset.Util.wixext -ext WixToolset.UI.wixext -arch x64 -o GraceKeeper-${{ steps.ver.outputs.version }}.msi
+          Get-Item GraceKeeper-${{ steps.ver.outputs.version }}.msi | Select-Object Name, Length
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: GraceKeeper ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
+          files: installer/GraceKeeper-${{ steps.ver.outputs.version }}.msi
+          body: |
+            ## GraceKeeper ${{ github.ref_name }}
+
+            FactoryTalk grace-period automation for Rockwell SIs.
+
+            Download the MSI below and double-click to install (per-machine, requires admin).
+
+            See the [README](https://github.com/${{ github.repository }}/blob/master/README.md) for what it does.
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
