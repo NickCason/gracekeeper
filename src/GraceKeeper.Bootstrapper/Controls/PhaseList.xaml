@@ -25,39 +25,37 @@
                 </Grid>
                 <TextBlock x:Name="TitleText" Grid.Column="1" Text="{Binding Title}" VerticalAlignment="Center"
                            FontSize="12" Foreground="{StaticResource MutedText}"/>
-                <Grid.Triggers>
-                    <DataTrigger Binding="{Binding State}" Value="Active">
-                        <DataTrigger.EnterActions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
-                                    <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
-                                    <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
-                                    <DoubleAnimation Storyboard.TargetName="SpinnerRotate" Storyboard.TargetProperty="Angle"
-                                                     From="0" To="360" Duration="0:0:0.9" RepeatBehavior="Forever"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </DataTrigger.EnterActions>
-                    </DataTrigger>
-                    <DataTrigger Binding="{Binding State}" Value="Done">
-                        <DataTrigger.EnterActions>
-                            <BeginStoryboard>
-                                <Storyboard>
-                                    <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
-                                    <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
-                                    <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
-                                </Storyboard>
-                            </BeginStoryboard>
-                        </DataTrigger.EnterActions>
-                    </DataTrigger>
-                </Grid.Triggers>
             </Grid>
             <DataTemplate.Triggers>
+                <!-- FrameworkElement.Triggers (Grid.Triggers) only accepts
+                     EventTrigger. DataTriggers belong in DataTemplate.Triggers,
+                     which is also where we set the title color. Setters and
+                     EnterActions can coexist on a single DataTrigger. -->
                 <DataTrigger Binding="{Binding State}" Value="Active">
                     <Setter TargetName="TitleText" Property="Foreground" Value="{StaticResource Text}"/>
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
+                                <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
+                                <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
+                                <DoubleAnimation Storyboard.TargetName="SpinnerRotate" Storyboard.TargetProperty="Angle"
+                                                 From="0" To="360" Duration="0:0:0.9" RepeatBehavior="Forever"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="Done">
                     <Setter TargetName="TitleText" Property="Foreground" Value="{StaticResource MutedText}"/>
+                    <DataTrigger.EnterActions>
+                        <BeginStoryboard>
+                            <Storyboard>
+                                <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
+                                <DoubleAnimation Storyboard.TargetName="Dot" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
+                                <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </DataTrigger.EnterActions>
                 </DataTrigger>
             </DataTemplate.Triggers>
         </DataTemplate>
