@@ -17,6 +17,9 @@
 
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLDIR"/>
 
+    <MajorUpgrade DowngradeErrorMessage="A newer version of GraceKeeper is already installed."
+                  Schedule="afterInstallInitialize"/>
+
     <Icon Id="appicon.ico" SourceFile="..\src\GraceKeeper.UI\Resources\gracekeeper.ico"/>
 
     <Feature Id="Main" Title="GraceKeeper" Level="1">
