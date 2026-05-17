@@ -130,7 +130,8 @@ IsRockwellProcess(hwnd) {
 }
 
 DismissPopup(popupHwnd) {
-    priorHwnd := WinGetID("A")
+    priorHwnd := 0
+    try priorHwnd := WinGetID("A")
     if (priorHwnd = popupHwnd)
         priorHwnd := 0
 
