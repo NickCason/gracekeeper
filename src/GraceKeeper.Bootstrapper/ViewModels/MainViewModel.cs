@@ -247,6 +247,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             else
             {
                 StatusText = $"Planning failed with code 0x{e.Status:X8}. The Burn log directory may contain details.";
+                IsRunning = false;
                 CurrentPage = new ErrorPage { DataContext = this };
             }
         });
@@ -303,6 +304,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             else
             {
                 StatusText = $"Operation failed with code 0x{e.Status:X8}. The Burn log directory may contain details.";
+                IsRunning = false;
                 CurrentPage = new ErrorPage { DataContext = this };
             }
         });

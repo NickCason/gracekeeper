@@ -136,7 +136,6 @@ public sealed class DashboardViewModel : ObservableObject
         catch
         {
             CleanerState = CleanerButtonState.Idle;
-            throw;
         }
     }
 
