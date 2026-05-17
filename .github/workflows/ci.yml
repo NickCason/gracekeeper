@@ -43,9 +43,11 @@ jobs:
         shell: pwsh
         run: |
           dotnet tool install --global wix
+          wix --version
           wix eula accept wix7
-          wix extension add WixToolset.Util.wixext
-          wix extension add WixToolset.UI.wixext
+          wix extension add --global WixToolset.Util.wixext
+          wix extension add --global WixToolset.UI.wixext
+          wix extension list --global
 
       - name: Run Pester tests
         shell: pwsh
