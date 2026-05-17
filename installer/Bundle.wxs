@@ -13,7 +13,7 @@
     <BootstrapperApplication SourceFile="$(mbanative)">
       <bal:WixManagedBootstrapperApplicationHost
           AssemblyFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\GraceKeeper.Bootstrapper.dll"/>
-      <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\BootstrapperCore.config"/>
+      <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Host.config"/>
       <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Core.dll"/>
       <Payload SourceFile="..\LICENSE"/>
     </BootstrapperApplication>
