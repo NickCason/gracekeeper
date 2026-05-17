@@ -20,4 +20,10 @@
   <ItemGroup>
     <Resource Include="Resources\gk-mark.png" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Include="BootstrapperCore.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
