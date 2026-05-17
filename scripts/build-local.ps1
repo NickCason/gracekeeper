@@ -49,14 +49,14 @@ try {
 # 6. Build the bundle
 Write-Host "`n[6/7] Building Burn bundle..." -ForegroundColor Cyan
 $exe = "$repoRoot\GraceKeeper-$Version.exe"
-# Locate mbanative.dll (managed BA native host) from NuGet cache
+# Locate mbanative.dll (managed BA native shim) in the NuGet cache; payloaded into the bundle.
 $mbanative = "$env:USERPROFILE\.nuget\packages\wixtoolset.mba.core\4.0.6\runtimes\win-x64\native\mbanative.dll"
 if (-not (Test-Path $mbanative)) {
     throw "mbanative.dll not found at '$mbanative'. Ensure WixToolset.Mba.Core 4.0.6 is restored (dotnet restore src\GraceKeeper.sln)."
 }
 Push-Location "$repoRoot\installer"
 try {
-    wix build Bundle.wxs -d Version=$Version -d mbanative=$mbanative -ext WixToolset.Util.wixext -ext WixToolset.Bal.wixext -arch x64 -o $exe
+    wix build Bundle.wxs -d Version=$Version -d mbanative=$mbanative -ext WixToolset.Util.wixext -ext WixToolset.Bal.wixext -ext WixToolset.NetFx.wixext -arch x64 -o $exe
     if ($LASTEXITCODE -ne 0) { throw "Bundle build failed" }
 } finally { Pop-Location }
 
