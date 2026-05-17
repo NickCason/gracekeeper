@@ -3,11 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="GraceKeeper"
         Width="640" Height="540"
+        Background="{DynamicResource Bg.Page}"
+        Foreground="{DynamicResource Text.Primary}"
         WindowStartupLocation="CenterScreen">
-    <Grid>
-        <TextBlock Text="GraceKeeper dashboard — content lands in Phase 3.5"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontSize="14" />
-    </Grid>
+    <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden" />
 </Window>
