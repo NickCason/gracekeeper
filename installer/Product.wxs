@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
-     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util"
-     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <Package Name="GraceKeeper"
            Manufacturer="Nick Cason"
            Version="$(Version)"
@@ -10,12 +9,6 @@
            InstallerVersion="500">
 
     <MediaTemplate EmbedCab="yes"/>
-
-    <WixVariable Id="WixUIBannerBmp" Value="Branding\banner.bmp"/>
-    <WixVariable Id="WixUIDialogBmp" Value="Branding\sidebar.bmp"/>
-    <WixVariable Id="WixUILicenseRtf" Value="License.rtf"/>
-
-    <ui:WixUI Id="WixUI_Minimal"/>
 
     <MajorUpgrade DowngradeErrorMessage="A newer version of GraceKeeper is already installed."
                   Schedule="afterInstallInitialize"/>
@@ -115,20 +108,21 @@
                          Type="string"
                          Value="&quot;[INSTALLDIR]GraceKeeper.exe&quot;"
                          KeyPath="yes"/>
-          <RegistryValue Name="GraceKeeperDismisser"
-                         Type="string"
-                         Value="&quot;[INSTALLDIR]AutoHotkey64.exe&quot; &quot;[INSTALLDIR]popup-dismisser.ahk&quot;"/>
         </RegistryKey>
       </Component>
     </ComponentGroup>
 
     <ComponentGroup Id="ProgramDataComponents">
-      <Component Id="ConfigJson" Directory="GK_PROGRAMDATA" Guid="*">
+      <!-- Permanent="yes": MSI creates these on install but never removes them
+           on uninstall. The BA's UninstallConfirm "Remove all data" path is
+           responsible for deleting %ProgramData%\GraceKeeper when the user
+           opts in. See spec docs/superpowers/specs/2026-05-16-v0.2.0-installer-bootstrapper-design.md. -->
+      <Component Id="ConfigJson" Directory="GK_PROGRAMDATA" Guid="*" Permanent="yes">
         <File Source="default-config.json" Id="config.json" Name="config.json" KeyPath="yes">
           <util:PermissionEx User="Users" GenericAll="yes"/>
         </File>
       </Component>
-      <Component Id="LogsDir" Directory="GK_LOGS" Guid="B1C2D3E4-F5A6-4789-B012-3456789ABCDF">
+      <Component Id="LogsDir" Directory="GK_LOGS" Guid="B1C2D3E4-F5A6-4789-B012-3456789ABCDF" Permanent="yes">
         <CreateFolder>
           <util:PermissionEx User="Users" GenericAll="yes"/>
         </CreateFolder>
@@ -161,24 +155,6 @@
                   Impersonate="no"
                   Return="ignore"/>
 
-    <!-- Launch dismisser + dashboard in the user's interactive session via schtasks. -->
-    <!-- /RU [LogonUser] runs the task as the logged-on user (not SYSTEM), /IT -->
-    <!-- means "only run when user is logged on interactively". cmd /c lets us  -->
-    <!-- chain create+run+delete in one ExeCommand without a helper script.     -->
-    <CustomAction Id="LaunchDismisser"
-                  Directory="INSTALLDIR"
-                  ExeCommand='cmd.exe /c schtasks /Create /F /TN "GraceKeeper - StartDismisser" /TR "\"[INSTALLDIR]AutoHotkey64.exe\" \"[INSTALLDIR]popup-dismisser.ahk\"" /SC ONCE /ST 00:00 /RU "[LogonUser]" /IT &amp;&amp; schtasks /Run /TN "GraceKeeper - StartDismisser" &amp;&amp; timeout /t 2 /nobreak &gt;nul &amp;&amp; schtasks /Delete /F /TN "GraceKeeper - StartDismisser"'
-                  Execute="deferred"
-                  Impersonate="no"
-                  Return="ignore"/>
-
-    <CustomAction Id="LaunchDashboard"
-                  Directory="INSTALLDIR"
-                  ExeCommand='cmd.exe /c schtasks /Create /F /TN "GraceKeeper - StartDashboard" /TR "\"[INSTALLDIR]GraceKeeper.exe\"" /SC ONCE /ST 00:00 /RU "[LogonUser]" /IT &amp;&amp; schtasks /Run /TN "GraceKeeper - StartDashboard" &amp;&amp; timeout /t 2 /nobreak &gt;nul &amp;&amp; schtasks /Delete /F /TN "GraceKeeper - StartDashboard"'
-                  Execute="deferred"
-                  Impersonate="no"
-                  Return="ignore"/>
-
     <CustomAction Id="StopDismisser"
                   Directory="INSTALLDIR"
                   ExeCommand='taskkill.exe /F /IM AutoHotkey64.exe'
@@ -186,21 +162,10 @@
                   Impersonate="no"
                   Return="ignore"/>
 
-    <CustomAction Id="StopDashboard"
-                  Directory="INSTALLDIR"
-                  ExeCommand='taskkill.exe /F /IM GraceKeeper.exe'
-                  Execute="deferred"
-                  Impersonate="no"
-                  Return="ignore"/>
-
     <InstallExecuteSequence>
       <Custom Action="StopDismisser"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
-      <Custom Action="StopDashboard"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
       <Custom Action="RemoveScheduledTask" Before="RemoveFiles"       Condition="REMOVE=&quot;ALL&quot;"/>
       <Custom Action="CreateScheduledTask" After="InstallFiles"       Condition="NOT Installed"/>
-      <!-- LaunchDismisser/LaunchDashboard must be Before="InstallFinalize" (deferred CAs cannot go after it) -->
-      <Custom Action="LaunchDismisser"     Before="InstallFinalize"   Condition="NOT Installed"/>
-      <Custom Action="LaunchDashboard"     Before="InstallFinalize"   Condition="NOT Installed"/>
     </InstallExecuteSequence>
 
   </Package>

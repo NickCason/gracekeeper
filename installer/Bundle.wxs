@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle Name="GraceKeeper"
+          Manufacturer="Nick Cason"
+          Version="$(Version)"
+          UpgradeCode="C4A00B0B-E797-4FA7-9B91-BA8C4F625DB6"
+          IconSourceFile="..\src\GraceKeeper.UI\Resources\gracekeeper.ico"
+          DisableRemove="no"
+          DisableModify="yes"
+          AboutUrl="https://github.com/ncason/gracekeeper">
+
+    <!-- Bundle-level mirror of the inner MSI's INSTALLDIR. Burn does not
+         flow MSI properties back to the bundle by default, so the BA looks
+         this variable up on Finish to launch the dashboard. bal:Overridable
+         lets a CLI invocation (e.g. silent reinstall) pass a custom folder. -->
+    <Variable Name="InstallFolder" Type="string" Value="[ProgramFiles64Folder]GraceKeeper\" bal:Overridable="yes"/>
+
+    <BootstrapperApplication>
+      <bal:WixManagedBootstrapperApplicationHost />
+      <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\GraceKeeper.Bootstrapper.dll"
+               bal:BAFactoryAssembly="yes"/>
+      <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Host.config"/>
+      <Payload SourceFile="..\src\GraceKeeper.Bootstrapper\bin\Release\net48\WixToolset.Mba.Core.dll"/>
+      <Payload SourceFile="$(mbanative)" Name="mbanative.dll"/>
+      <Payload SourceFile="..\LICENSE"/>
+    </BootstrapperApplication>
+
+    <Chain>
+      <!-- Managed BA host requires .NET Framework 4.8; install on demand if absent. -->
+      <PackageGroupRef Id="NetFx48WebAsPrereq"/>
+      <MsiPackage Id="GraceKeeperMsi"
+                  SourceFile="bin\dev\GraceKeeper-$(Version).msi"
+                  Vital="yes"
+                  Compressed="yes"
+                  Visible="no"
+                  ForcePerMachine="yes"/>
+    </Chain>
+  </Bundle>
+</Wix>

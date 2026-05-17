@@ -11,14 +11,16 @@ Before cutting a release tag, verify on a clean VM snapshot.
 
 ## Build verification
 
-- [ ] Build MSI on clean checkout: `.\scripts\build-local.ps1 -Version <ver>`
-- [ ] MSI size sane (around 2.1 MB for v0.1.0; flag drift >50%)
-- [ ] Install MSI on Windows 10 VM snapshot: `msiexec /i GraceKeeper-<ver>.msi /L*v install.log`
-- [ ] Install MSI on Windows 11 VM snapshot
+- [ ] Build bundle on clean checkout: `.\scripts\build-local.ps1 -Version <ver>`
+- [ ] Bundle size in 2-7 MB range (around 2.1 MB for v0.2.0; flag drift >50%)
+- [ ] Install on Windows 10 VM snapshot: double-click `GraceKeeper-<ver>.exe`. SmartScreen warning expected — click "More info" → "Run anyway."
+- [ ] Install on Windows 11 VM snapshot
 
 ## Post-install behavior
 
-- [ ] Tray icon (red `GK` mark) appears in system tray within 30 seconds of login (verify after a logout + login cycle so the HKLM Run entries fire)
+- [ ] Within 5 seconds of clicking Finish on the Bootstrapper page (with "Launch GraceKeeper now" checked), both `GraceKeeper.exe` and `AutoHotkey64.exe` appear in Task Manager. No logout+login required.
+- [ ] Tray icon (red `GK` mark) appears in system tray within 5 seconds
+- [ ] Bootstrapper UI renders the three pages (Welcome+EULA, Progress, Finish) with legible text at 100%, 125%, and 150% display scaling
 - [ ] Double-click tray icon → dashboard window opens
 - [ ] Window shows hero metrics with zero counts initially
 - [ ] Activity log empty initially
@@ -38,22 +40,26 @@ Before cutting a release tag, verify on a clean VM snapshot.
 - [ ] Settings: change interval to e.g. 60 minutes, save. Confirm `schtasks /Query` shows the new `/RI 60`
 - [ ] Pause: click pause in tray menu. Confirm `%ProgramData%\GraceKeeper\DISABLED` exists, and that a fresh popup is NOT dismissed (open LogixDesigner and confirm popup stays). Unpause and re-verify dismissal works
 - [ ] Theme switch: toggle Windows theme via `Settings → Personalization → Colors`. Confirm dashboard follows within ~1 second (greyer surfaces in light, dark surfaces in dark — Rockwell-style crimson accent in both)
+- [ ] **Supervisor respawn:** kill `AutoHotkey64.exe` via Task Manager. Within 30 seconds, a new `AutoHotkey64.exe` instance appears. `%ProgramData%\GraceKeeper\logs\supervisor.log` records a new `spawned dismisser pid=...` entry.
+- [ ] **Detached-child survival:** kill `GraceKeeper.exe` via Task Manager. `AutoHotkey64.exe` stays alive (it's a detached child, not killed with the dashboard). Relaunch the dashboard from the Start Menu. `supervisor.log` records `adopted existing dismisser pid=...`.
+- [ ] `%ProgramData%\GraceKeeper\dismisser-pid.json` exists and contains a JSON record with the current AHK PID, exe path, script path, and start time
 
 ## Uninstall behavior
 
-- [ ] `msiexec /x GraceKeeper-<ver>.msi /qb`
+- [ ] Settings → Apps → GraceKeeper → Uninstall (or run `GraceKeeper-<ver>.exe /uninstall` directly). The same custom UI opens asking for confirmation.
+- [ ] Click Uninstall in the bootstrapper UI. Wait for the success page.
 - [ ] Confirm `C:\Program Files\GraceKeeper\` is gone
 - [ ] Confirm `schtasks /Query /TN "GraceKeeper - Cleanup RNL"` reports "not found"
 - [ ] Confirm `reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Run" /v GraceKeeper` reports "not found"
 - [ ] Confirm Start Menu shortcut is gone
 - [ ] Confirm tray icon is gone (relaunch the dashboard wouldn't recreate it after uninstall)
-- [ ] `%ProgramData%\GraceKeeper\` may persist (intentional, for upgrades). Delete manually after final uninstall if desired.
+- [ ] `%ProgramData%\GraceKeeper\` persists by default (intentional, for upgrades). If "Remove all data" was checked in the uninstall UI, confirm it is gone instead.
 
 ## Upgrade flow (when releasing a 0.1.x → 0.1.(x+1) bump)
 
 - [ ] Install previous version on clean VM
 - [ ] Drop a marker file in `%ProgramData%\GraceKeeper\upgrade-marker.txt`
-- [ ] Install new version over it via `msiexec /i ...` (no need to uninstall first — MajorUpgrade handles it)
+- [ ] Install new version over it via `.\GraceKeeper-<ver>.exe` (no need to uninstall first — MajorUpgrade handles it)
 - [ ] Verify marker file survived (ProgramData was preserved)
 - [ ] Verify scheduled task still exists with original schedule (unchanged on upgrade)
 
@@ -68,6 +74,5 @@ Before cutting a release tag, verify on a clean VM snapshot.
 
 ## Known limitations (current)
 
-- **Unsigned MSI**: users will see SmartScreen "Windows protected your PC" on first install. Click "More info" → "Run anyway." This goes away once Microsoft's reputation system catches up (or after code signing is added).
-- **Dismisser supervisor unwired in v1**: if `AutoHotkey64.exe popup-dismisser.ahk` dies mid-session, logout+login restarts it via the HKLM Run entry. Supervisor code is in `GraceKeeper.Core` (tested) but not yet hooked up because identifying our specific AHK process among any other AHK scripts the user might run requires PID/command-line tracking. Slated for v2.
-- **Code signing**: not done. The MSI's publisher field shows "Nick Cason" (text only, unverified). EV or org cert is a future step.
+- **Unsigned bundle**: users will see SmartScreen "Windows protected your PC" on first install. Click "More info" → "Run anyway." This goes away once Microsoft's reputation system catches up (or after code signing is added in v0.3.0).
+- **Code signing**: not done. The EXE's publisher field shows "Nick Cason" (text only, unverified). SignPath.io Foundation application is the planned free path for v0.3.0.

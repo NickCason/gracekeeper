@@ -1,0 +1,37 @@
+<UserControl x:Class="GraceKeeper.Bootstrapper.Views.UninstallConfirmPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="{StaticResource Bg}">
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Border Grid.Row="0" Background="{StaticResource Titlebar}" Padding="14,8" BorderBrush="{StaticResource Border}" BorderThickness="0,0,0,1">
+      <TextBlock Text="GraceKeeper Setup" FontSize="12" Foreground="#CCCCCC"/>
+    </Border>
+    <Grid Grid.Row="1" Margin="28,22,28,0">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <Border Grid.Column="0" Width="32" Height="32" CornerRadius="7" Background="{StaticResource AccentGradient}">
+        <TextBlock Text="GK" FontWeight="Bold" FontSize="14" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+      </Border>
+      <TextBlock Grid.Column="1" Text="GraceKeeper" FontSize="15" FontWeight="SemiBold" Margin="12,0,0,0" VerticalAlignment="Center"/>
+    </Grid>
+    <StackPanel Grid.Row="2" Margin="28,18,28,0">
+      <TextBlock FontSize="22" FontWeight="Light" Foreground="White" TextWrapping="Wrap">Uninstall GraceKeeper?</TextBlock>
+      <TextBlock Margin="0,12,0,0" FontSize="12" Foreground="{StaticResource MutedText}" TextWrapping="Wrap">
+        This will remove the dashboard, dismisser, scheduled cleaner, and Start Menu shortcut from this machine.
+      </TextBlock>
+      <CheckBox Content="Remove all data (counters, logs, config)" Foreground="{StaticResource Text}" Margin="0,18,0,0" FontSize="11"
+                IsChecked="{Binding RemoveAllData, Mode=TwoWay}"/>
+    </StackPanel>
+    <Border Grid.Row="3" Background="{StaticResource BgAlt}" BorderBrush="{StaticResource Border}" BorderThickness="0,1,0,0" Padding="28,12">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+        <Button Content="Cancel" Style="{StaticResource SecondaryButton}" Command="{Binding CancelCommand}" Margin="0,0,8,0"/>
+        <Button Content="Uninstall" Style="{StaticResource PrimaryButton}" Command="{Binding UninstallCommand}"/>
+      </StackPanel>
+    </Border>
+  </Grid>
+</UserControl>

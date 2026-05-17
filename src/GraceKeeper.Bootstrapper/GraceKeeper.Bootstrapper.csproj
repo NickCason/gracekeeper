@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>GraceKeeper.Bootstrapper</RootNamespace>
+    <AssemblyName>GraceKeeper.Bootstrapper</AssemblyName>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>false</UseWindowsForms>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <!-- Explicit reproducible-build flags. The .NET SDK already defaults
+         Deterministic to true for Release, but pinning it makes intent
+         visible and survives future SDK behavior changes. PathMap strips
+         absolute developer paths so embedded sequence-point paths don't
+         leak machine-specific roots into the produced DLL. -->
+    <Deterministic>true</Deterministic>
+    <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WixToolset.Mba.Core 5.x ships on the WiX nightly feed; nuget.org tops out at 4.0.6.
+         Using 4.0.6 for scaffolding; pin to 5.x when nightly feed is wired in Task 18. -->
+    <PackageReference Include="WixToolset.Mba.Core" Version="4.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\gk-mark.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- App.xaml auto-classified as ApplicationDefinition is forbidden in Library projects.
+         Remove it from both buckets and keep it as None (theme loaded via pack URI in code). -->
+    <ApplicationDefinition Remove="App.xaml" />
+    <Page Remove="App.xaml" />
+    <None Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="WixToolset.Mba.Host.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
