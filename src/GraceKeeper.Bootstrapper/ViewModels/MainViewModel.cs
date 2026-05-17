@@ -26,6 +26,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _timeRemaining = "";
     private string _version = "";
     private string _licenseText = "";
+    private bool _removeAllData;
 
     public event Action? RequestClose;
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -38,8 +39,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public string TimeRemaining { get => _timeRemaining; set { _timeRemaining = value; OnPropertyChanged(); } }
     public string Version { get => _version; set { _version = value; OnPropertyChanged(); } }
     public string LicenseText { get => _licenseText; set { _licenseText = value; OnPropertyChanged(); } }
+    public bool RemoveAllData { get => _removeAllData; set { _removeAllData = value; OnPropertyChanged(); } }
 
     public ICommand InstallCommand { get; }
+    public ICommand UninstallCommand { get; }
     public ICommand CancelCommand { get; }
     public ICommand FinishCommand { get; }
 
@@ -52,6 +55,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         InstallCommand = new RelayCommand(_ => DoInstall(), _ => AcceptedLicense);
         CancelCommand = new RelayCommand(_ => DoCancel());
         FinishCommand = new RelayCommand(_ => DoFinish());
+        UninstallCommand = new RelayCommand(_ => DoUninstall());
 
         // WixToolset.Mba.Core 4.0.6 event names confirmed via reflection:
         //   ExecuteMsiMessage  -> ExecuteMsiMessageEventArgs  (.Message: string)
@@ -73,11 +77,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
         if (_command.Action == LaunchAction.Uninstall)
         {
-            // Uninstall flow added in Task 16. Placeholder for now.
-            CurrentPage = new UserControl
-            {
-                Content = new TextBlock { Text = "Uninstall flow placeholder", Margin = new Thickness(20) }
-            };
+            CurrentPage = new UninstallConfirmPage { DataContext = this };
         }
         else
         {
@@ -94,6 +94,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             return File.Exists(path) ? File.ReadAllText(path) : "License text unavailable.";
         }
         catch { return "License text unavailable."; }
+    }
+
+    private void DoUninstall()
+    {
+        CurrentPage = new ProgressPage { DataContext = this };
+        StatusText = "Removing GraceKeeper…";
+        _engine.Plan(LaunchAction.Uninstall);
     }
 
     private void DoInstall()
@@ -144,11 +151,28 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             if (e.Status >= 0)
             {
-                CurrentPage = new FinishPage { DataContext = this };
+                if (_command.Action == LaunchAction.Uninstall)
+                {
+                    if (RemoveAllData)
+                    {
+                        try
+                        {
+                            var pdRoot = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+                            var dir = System.IO.Path.Combine(pdRoot, "GraceKeeper");
+                            if (System.IO.Directory.Exists(dir)) System.IO.Directory.Delete(dir, recursive: true);
+                        }
+                        catch { /* best effort */ }
+                    }
+                    CurrentPage = new UninstallFinishPage { DataContext = this };
+                }
+                else
+                {
+                    CurrentPage = new FinishPage { DataContext = this };
+                }
             }
             else
             {
-                StatusText = $"Install failed with code 0x{e.Status:X8}";
+                StatusText = $"Operation failed with code 0x{e.Status:X8}";
                 // ErrorPage added in Task 17.
             }
         });
