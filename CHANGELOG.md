@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-05-17
+
+### Fixed
+- **Finish-page launch did nothing on real installs.** The bundle's `InstallFolder` variable stores `[ProgramFiles64Folder]GraceKeeper\` as literal text; `IEngine.GetVariableString` does not expand `[X]` references — only `IEngine.FormatString` does. The bootstrapper now calls `FormatString("[InstallFolder]")` so the dashboard launch path resolves to a real filesystem path instead of throwing inside `Process.Start`. (v0.2.0 worked only with the cached install path; first-time installs from a freshly-downloaded EXE produced no launch.)
+
 ## [0.2.0] - 2026-05-17
 
 ### Changed
