@@ -10,13 +10,20 @@
 
     <MediaTemplate EmbedCab="yes"/>
 
+    <Icon Id="appicon.ico" SourceFile="..\src\GraceKeeper.UI\Resources\gracekeeper.ico"/>
+
     <Feature Id="Main" Title="GraceKeeper" Level="1">
       <ComponentGroupRef Id="ProductComponents"/>
       <ComponentGroupRef Id="ProgramDataComponents"/>
+      <ComponentGroupRef Id="ShortcutComponents"/>
     </Feature>
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLDIR" Name="GraceKeeper"/>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="GK_PROGRAMMENU" Name="GraceKeeper"/>
     </StandardDirectory>
 
     <StandardDirectory Id="CommonAppDataFolder">
@@ -92,6 +99,17 @@
       <Component Id="ReadmeFile" Guid="*">
         <File Source="..\README.md" Id="README.md" KeyPath="yes"/>
       </Component>
+      <Component Id="RunRegistry" Guid="*">
+        <RegistryKey Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run">
+          <RegistryValue Name="GraceKeeper"
+                         Type="string"
+                         Value="&quot;[INSTALLDIR]GraceKeeper.exe&quot;"
+                         KeyPath="yes"/>
+          <RegistryValue Name="GraceKeeperDismisser"
+                         Type="string"
+                         Value="&quot;[INSTALLDIR]AutoHotkey64.exe&quot; &quot;[INSTALLDIR]popup-dismisser.ahk&quot;"/>
+        </RegistryKey>
+      </Component>
     </ComponentGroup>
 
     <ComponentGroup Id="ProgramDataComponents">
@@ -106,6 +124,37 @@
         </CreateFolder>
       </Component>
     </ComponentGroup>
+
+    <ComponentGroup Id="ShortcutComponents">
+      <Component Id="StartMenuShortcut" Directory="GK_PROGRAMMENU" Guid="*">
+        <Shortcut Id="GraceKeeperShortcut"
+                  Name="GraceKeeper"
+                  Target="[INSTALLDIR]GraceKeeper.exe"
+                  WorkingDirectory="INSTALLDIR"
+                  Icon="appicon.ico"/>
+        <RemoveFolder Id="RemoveGkProgramMenu" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\GraceKeeper" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+    </ComponentGroup>
+
+    <CustomAction Id="CreateScheduledTask"
+                  Directory="INSTALLDIR"
+                  ExeCommand="schtasks.exe /Create /F /TN &quot;GraceKeeper - Cleanup RNL&quot; /TR &quot;powershell.exe -NoProfile -ExecutionPolicy Bypass -File '[INSTALLDIR]rnl-cleaner.ps1'&quot; /SC HOURLY /MO 12 /RU SYSTEM /ST 03:00"
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check"/>
+
+    <CustomAction Id="RemoveScheduledTask"
+                  Directory="INSTALLDIR"
+                  ExeCommand='schtasks.exe /Delete /F /TN "GraceKeeper - Cleanup RNL"'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
+    <InstallExecuteSequence>
+      <Custom Action="CreateScheduledTask" After="InstallFiles" Condition="NOT Installed"/>
+      <Custom Action="RemoveScheduledTask" Before="RemoveFiles" Condition="REMOVE=&quot;ALL&quot;"/>
+    </InstallExecuteSequence>
 
   </Package>
 </Wix>
