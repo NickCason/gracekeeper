@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>GraceKeeper.Bootstrapper</RootNamespace>
+    <AssemblyName>GraceKeeper.Bootstrapper</AssemblyName>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>false</UseWindowsForms>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WixToolset.Mba.Core 5.x ships on the WiX nightly feed; nuget.org tops out at 4.0.6.
+         Using 4.0.6 for scaffolding; pin to 5.x when nightly feed is wired in Task 18. -->
+    <PackageReference Include="WixToolset.Mba.Core" Version="4.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\gk-mark.png" />
+  </ItemGroup>
+</Project>
