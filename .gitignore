@@ -32,3 +32,6 @@ DISABLED
 .vs/
 .vscode/
 .idea/
+
+# MSI staging (AHK runtime copied at build time)
+installer/staging/

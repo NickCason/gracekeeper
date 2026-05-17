@@ -18,8 +18,71 @@
     </StandardDirectory>
 
     <ComponentGroup Id="ProductComponents" Directory="INSTALLDIR">
-      <Component Id="PlaceholderRegistry" Guid="*">
-        <RegistryValue Root="HKLM" Key="Software\GraceKeeper" Name="placeholder" Type="integer" Value="1" KeyPath="yes"/>
+      <Component Id="DashboardExe" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\GraceKeeper.exe" Id="GraceKeeper.exe" KeyPath="yes"/>
+      </Component>
+      <Component Id="DashboardConfig" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\GraceKeeper.exe.config" Id="GraceKeeper.exe.config" KeyPath="yes"/>
+      </Component>
+      <Component Id="CoreDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\GraceKeeper.Core.dll" Id="GraceKeeper.Core.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="HardcodetDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\Hardcodet.NotifyIcon.Wpf.dll" Id="Hardcodet.NotifyIcon.Wpf.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysTextJsonDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Text.Json.dll" Id="System.Text.Json.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysTextEncodingsWebDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Text.Encodings.Web.dll" Id="System.Text.Encodings.Web.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysMemoryDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Memory.dll" Id="System.Memory.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysBuffersDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Buffers.dll" Id="System.Buffers.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysNumericsVectorsDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Numerics.Vectors.dll" Id="System.Numerics.Vectors.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysRuntimeCSUnsafeDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Runtime.CompilerServices.Unsafe.dll" Id="System.Runtime.CompilerServices.Unsafe.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysThreadingTasksExtDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Threading.Tasks.Extensions.dll" Id="System.Threading.Tasks.Extensions.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysValueTupleDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.ValueTuple.dll" Id="System.ValueTuple.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysSecurityAccessControlDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Security.AccessControl.dll" Id="System.Security.AccessControl.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="SysSecurityPrincipalWindowsDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\System.Security.Principal.Windows.dll" Id="System.Security.Principal.Windows.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="MsBclAsyncInterfacesDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\Microsoft.Bcl.AsyncInterfaces.dll" Id="Microsoft.Bcl.AsyncInterfaces.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="MsWin32RegistryDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\Microsoft.Win32.Registry.dll" Id="Microsoft.Win32.Registry.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="MsWin32SystemEventsDll" Guid="*">
+        <File Source="..\src\GraceKeeper.UI\bin\Release\net48\Microsoft.Win32.SystemEvents.dll" Id="Microsoft.Win32.SystemEvents.dll" KeyPath="yes"/>
+      </Component>
+      <Component Id="AhkRuntime" Guid="*">
+        <File Source="staging\AutoHotkey64.exe" Id="AutoHotkey64.exe" KeyPath="yes"/>
+      </Component>
+      <Component Id="DismisserAhk" Guid="*">
+        <File Source="..\src\popup-dismisser.ahk" Id="popup_dismisser.ahk" Name="popup-dismisser.ahk" KeyPath="yes"/>
+      </Component>
+      <Component Id="CleanerPs1" Guid="*">
+        <File Source="..\src\rnl-cleaner.ps1" Id="rnl_cleaner.ps1" Name="rnl-cleaner.ps1" KeyPath="yes"/>
+      </Component>
+      <Component Id="LicenseFile" Guid="*">
+        <File Source="..\LICENSE" Id="LICENSE" KeyPath="yes"/>
+      </Component>
+      <Component Id="ReadmeFile" Guid="*">
+        <File Source="..\README.md" Id="README.md" KeyPath="yes"/>
       </Component>
     </ComponentGroup>
 
