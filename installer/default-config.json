@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "schedule": { "interval_minutes": 720, "start_time": "03:00" },
+  "theme": "auto",
+  "counters": { "popups_dismissed_lifetime": 0, "rnl_files_deleted_lifetime": 0 },
+  "log_offsets": { "dismisser.log": 0, "cleaner.log": 0 },
+  "update_check": { "enabled": true, "last_checked_utc": null, "latest_known_version": null }
+}

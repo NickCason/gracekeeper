@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <Package Name="GraceKeeper"
            Manufacturer="Nick Cason"
            Version="$(Version)"
@@ -11,10 +12,17 @@
 
     <Feature Id="Main" Title="GraceKeeper" Level="1">
       <ComponentGroupRef Id="ProductComponents"/>
+      <ComponentGroupRef Id="ProgramDataComponents"/>
     </Feature>
 
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLDIR" Name="GraceKeeper"/>
+    </StandardDirectory>
+
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="GK_PROGRAMDATA" Name="GraceKeeper">
+        <Directory Id="GK_LOGS" Name="logs"/>
+      </Directory>
     </StandardDirectory>
 
     <ComponentGroup Id="ProductComponents" Directory="INSTALLDIR">
@@ -83,6 +91,19 @@
       </Component>
       <Component Id="ReadmeFile" Guid="*">
         <File Source="..\README.md" Id="README.md" KeyPath="yes"/>
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="ProgramDataComponents">
+      <Component Id="ConfigJson" Directory="GK_PROGRAMDATA" Guid="*">
+        <File Source="default-config.json" Id="config.json" Name="config.json" KeyPath="yes">
+          <util:PermissionEx User="Users" GenericAll="yes"/>
+        </File>
+      </Component>
+      <Component Id="LogsDir" Directory="GK_LOGS" Guid="B1C2D3E4-F5A6-4789-B012-3456789ABCDF">
+        <CreateFolder>
+          <util:PermissionEx User="Users" GenericAll="yes"/>
+        </CreateFolder>
       </Component>
     </ComponentGroup>
 

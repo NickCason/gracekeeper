@@ -35,3 +35,6 @@ DISABLED
 
 # MSI staging (AHK runtime copied at build time)
 installer/staging/
+
+# WiX extension cache
+installer/.wix/
