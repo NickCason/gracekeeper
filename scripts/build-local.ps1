@@ -27,13 +27,21 @@ if ($LASTEXITCODE -ne 0) { throw "xUnit tests failed" }
 
 # 4. Stage the AHK runtime
 Write-Host "`n[4/7] Staging AutoHotkey64.exe..." -ForegroundColor Cyan
-$ahkSrc = "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe"
 $staging = "$repoRoot\installer\staging"
-if (-not (Test-Path $ahkSrc)) {
-    throw "AutoHotkey64.exe not found at $ahkSrc. Install AutoHotkey v2 (see docs/developer-setup.md)."
-}
 if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
-Copy-Item $ahkSrc "$staging\AutoHotkey64.exe" -Force
+$staged = "$staging\AutoHotkey64.exe"
+$ahkCandidates = @(
+    "C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe",
+    "C:\Program Files\AutoHotkey\AutoHotkey64.exe"
+)
+$ahkSrc = $ahkCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($ahkSrc) {
+    Copy-Item $ahkSrc $staged -Force
+} elseif (-not (Test-Path $staged)) {
+    throw "AutoHotkey64.exe not found in standard paths and no prior staged copy at $staged. Install AutoHotkey v2 (see docs/developer-setup.md)."
+} else {
+    Write-Host "  (using existing staged copy at $staged)"
+}
 
 # 5. Build the inner MSI to bin/dev/
 Write-Host "`n[5/7] Building inner MSI..." -ForegroundColor Cyan
