@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
     <SolidColorBrush x:Key="Bg.Page" Color="#D8DCE2"/>
     <SolidColorBrush x:Key="Bg.Surface" Color="#EAECF0"/>
     <SolidColorBrush x:Key="Border.Default" Color="#C4C9D2"/>
@@ -15,4 +16,14 @@
     <SolidColorBrush x:Key="Tag.CleanBg" Color="#D6E3F4"/>
     <SolidColorBrush x:Key="Tag.CleanFg" Color="#1E40AF"/>
     <SolidColorBrush x:Key="Button.SecondaryBg" Color="#EAECF0"/>
+
+    <!-- Animation tokens -->
+    <Duration x:Key="Duration.Quick">0:0:0.12</Duration>
+    <Duration x:Key="Duration.Standard">0:0:0.24</Duration>
+    <Duration x:Key="Duration.Slow">0:0:0.48</Duration>
+    <Duration x:Key="Duration.Counter">0:0:1.2</Duration>
+    <Duration x:Key="Duration.Pulse">0:0:1.6</Duration>
+
+    <CubicEase x:Key="Easing.Standard" EasingMode="EaseOut"/>
+    <QuinticEase x:Key="Easing.Decelerate" EasingMode="EaseOut"/>
 </ResourceDictionary>

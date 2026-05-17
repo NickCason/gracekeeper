@@ -55,4 +55,14 @@
       </Setter.Value>
     </Setter>
   </Style>
+
+  <!-- Animation tokens -->
+  <Duration x:Key="Duration.Quick">0:0:0.12</Duration>
+  <Duration x:Key="Duration.Standard">0:0:0.24</Duration>
+  <Duration x:Key="Duration.Slow">0:0:0.48</Duration>
+  <Duration x:Key="Duration.Counter">0:0:1.2</Duration>
+  <Duration x:Key="Duration.Pulse">0:0:1.6</Duration>
+
+  <CubicEase x:Key="Easing.Standard" EasingMode="EaseOut"/>
+  <QuinticEase x:Key="Easing.Decelerate" EasingMode="EaseOut"/>
 </ResourceDictionary>
