@@ -77,9 +77,22 @@ public partial class App : Application
 
     private void ApplyTheme(AppTheme theme)
     {
+        // App.xaml merges Themes/Light.xaml + Controls/AnimatedCounter.xaml +
+        // Controls/RunCleanerButton.xaml. We must only swap the theme dictionary
+        // — clearing all merged dicts here would also wipe the control style
+        // dicts, leaving AnimatedCounter and RunCleanerButton without templates
+        // (rendered as invisible).
         var src = theme == AppTheme.Dark ? "Themes/Dark.xaml" : "Themes/Light.xaml";
         var dict = new ResourceDictionary { Source = new Uri(src, UriKind.Relative) };
-        Resources.MergedDictionaries.Clear();
+        for (var i = Resources.MergedDictionaries.Count - 1; i >= 0; i--)
+        {
+            var existing = Resources.MergedDictionaries[i];
+            if (existing.Source != null
+                && existing.Source.OriginalString.StartsWith("Themes/", StringComparison.OrdinalIgnoreCase))
+            {
+                Resources.MergedDictionaries.RemoveAt(i);
+            }
+        }
         Resources.MergedDictionaries.Add(dict);
     }
 
