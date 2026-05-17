@@ -161,9 +161,46 @@
                   Impersonate="no"
                   Return="ignore"/>
 
+    <!-- Launch dismisser + dashboard in the user's interactive session via schtasks. -->
+    <!-- /RU [LogonUser] runs the task as the logged-on user (not SYSTEM), /IT -->
+    <!-- means "only run when user is logged on interactively". cmd /c lets us  -->
+    <!-- chain create+run+delete in one ExeCommand without a helper script.     -->
+    <CustomAction Id="LaunchDismisser"
+                  Directory="INSTALLDIR"
+                  ExeCommand='cmd.exe /c schtasks /Create /F /TN "GraceKeeper - StartDismisser" /TR "\"[INSTALLDIR]AutoHotkey64.exe\" \"[INSTALLDIR]popup-dismisser.ahk\"" /SC ONCE /ST 00:00 /RU "[LogonUser]" /IT &amp;&amp; schtasks /Run /TN "GraceKeeper - StartDismisser" &amp;&amp; timeout /t 2 /nobreak &gt;nul &amp;&amp; schtasks /Delete /F /TN "GraceKeeper - StartDismisser"'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
+    <CustomAction Id="LaunchDashboard"
+                  Directory="INSTALLDIR"
+                  ExeCommand='cmd.exe /c schtasks /Create /F /TN "GraceKeeper - StartDashboard" /TR "\"[INSTALLDIR]GraceKeeper.exe\"" /SC ONCE /ST 00:00 /RU "[LogonUser]" /IT &amp;&amp; schtasks /Run /TN "GraceKeeper - StartDashboard" &amp;&amp; timeout /t 2 /nobreak &gt;nul &amp;&amp; schtasks /Delete /F /TN "GraceKeeper - StartDashboard"'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
+    <CustomAction Id="StopDismisser"
+                  Directory="INSTALLDIR"
+                  ExeCommand='taskkill.exe /F /IM AutoHotkey64.exe'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
+    <CustomAction Id="StopDashboard"
+                  Directory="INSTALLDIR"
+                  ExeCommand='taskkill.exe /F /IM GraceKeeper.exe'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
     <InstallExecuteSequence>
-      <Custom Action="CreateScheduledTask" After="InstallFiles" Condition="NOT Installed"/>
-      <Custom Action="RemoveScheduledTask" Before="RemoveFiles" Condition="REMOVE=&quot;ALL&quot;"/>
+      <Custom Action="StopDismisser"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
+      <Custom Action="StopDashboard"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
+      <Custom Action="RemoveScheduledTask" Before="RemoveFiles"       Condition="REMOVE=&quot;ALL&quot;"/>
+      <Custom Action="CreateScheduledTask" After="InstallFiles"       Condition="NOT Installed"/>
+      <!-- LaunchDismisser/LaunchDashboard must be Before="InstallFinalize" (deferred CAs cannot go after it) -->
+      <Custom Action="LaunchDismisser"     Before="InstallFinalize"   Condition="NOT Installed"/>
+      <Custom Action="LaunchDashboard"     Before="InstallFinalize"   Condition="NOT Installed"/>
     </InstallExecuteSequence>
 
   </Package>
