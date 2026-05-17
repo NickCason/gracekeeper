@@ -38,3 +38,6 @@ installer/staging/
 
 # WiX extension cache
 installer/.wix/
+
+# Superpowers brainstorming session artifacts
+.superpowers/
