@@ -1,11 +1,155 @@
 <Page x:Class="GraceKeeper.UI.Views.DashboardView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:vm="clr-namespace:GraceKeeper.UI.ViewModels"
+      xmlns:conv="clr-namespace:GraceKeeper.UI.Converters"
       Background="{DynamicResource Bg.Page}"
       Foreground="{DynamicResource Text.Primary}">
-    <Grid>
-        <TextBlock Text="Dashboard — content lands in Task 3.5"
-                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                   FontSize="14" Foreground="{DynamicResource Text.Muted}" />
-    </Grid>
+    <Page.DataContext>
+        <vm:DashboardViewModel/>
+    </Page.DataContext>
+    <Page.Resources>
+        <conv:HealthToColorConverter x:Key="HealthToColor"/>
+    </Page.Resources>
+    <DockPanel Margin="16">
+        <!-- Titlebar -->
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource Bg.Surface}"
+                BorderBrush="{DynamicResource Border.Default}"
+                BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+            <Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Border Background="{DynamicResource Brand.Red}" CornerRadius="4" Width="26" Height="26" VerticalAlignment="Center">
+                        <TextBlock Text="GK" Foreground="White" FontWeight="Bold" FontSize="12"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="GraceKeeper" FontWeight="SemiBold" FontSize="14"
+                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <TextBlock Text="v0.1.0" Foreground="{DynamicResource Text.Muted}" FontSize="11"
+                               VerticalAlignment="Center" Margin="6,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Ellipse Width="8" Height="8"
+                             Fill="{Binding StatusText, Converter={StaticResource HealthToColor}}"
+                             VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{Binding StatusText}" FontSize="11"
+                               VerticalAlignment="Center"
+                               Foreground="{Binding StatusText, Converter={StaticResource HealthToColor}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Action row pinned to bottom -->
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Content="Run cleaner now" Background="{DynamicResource Brand.Red}" Foreground="White"
+                    Padding="14,8" BorderThickness="0" Click="RunCleaner_Click"/>
+            <Button Content="Pause" Background="{DynamicResource Button.SecondaryBg}"
+                    Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
+                    BorderBrush="{DynamicResource Border.Default}" Click="Pause_Click"/>
+            <Button Content="Settings" Background="{DynamicResource Button.SecondaryBg}"
+                    Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
+                    BorderBrush="{DynamicResource Border.Default}" Click="Settings_Click"/>
+        </StackPanel>
+
+        <!-- Hero metric cards + activity log -->
+        <StackPanel>
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Border Grid.Column="0" Background="{DynamicResource Bg.Surface}"
+                        BorderBrush="{DynamicResource Border.Default}" BorderThickness="1"
+                        CornerRadius="8" Padding="14" Margin="0,0,5,0">
+                    <Border BorderBrush="{DynamicResource Brand.Red}" BorderThickness="3,0,0,0" Padding="6,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{Binding PopupsDismissedLifetime}" FontSize="28" FontWeight="SemiBold"/>
+                            <TextBlock Text="Popups dismissed" FontSize="11" Foreground="{DynamicResource Text.Muted}"/>
+                            <TextBlock Text="{Binding PopupsToday, StringFormat='+{0} today'}" FontSize="11"
+                                       Foreground="{DynamicResource Semantic.Good}" Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Border>
+                <Border Grid.Column="1" Background="{DynamicResource Bg.Surface}"
+                        BorderBrush="{DynamicResource Border.Default}" BorderThickness="1"
+                        CornerRadius="8" Padding="14" Margin="5,0,5,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding RnlFilesDeletedLifetime}" FontSize="28" FontWeight="SemiBold"/>
+                        <TextBlock Text=".rnl files deleted" FontSize="11" Foreground="{DynamicResource Text.Muted}"/>
+                        <TextBlock Text="{Binding FilesToday, StringFormat='+{0} today'}" FontSize="11"
+                                   Foreground="{DynamicResource Semantic.Good}" Margin="0,5,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Background="{DynamicResource Bg.Surface}"
+                        BorderBrush="{DynamicResource Border.Default}" BorderThickness="1"
+                        CornerRadius="8" Padding="14" Margin="5,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="{Binding TimeSinceLastCleanText}" FontSize="22" FontWeight="SemiBold"/>
+                        <TextBlock Text="Since last clean" FontSize="11" Foreground="{DynamicResource Text.Muted}"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border Background="{DynamicResource Bg.Surface}"
+                    BorderBrush="{DynamicResource Border.Default}" BorderThickness="1"
+                    CornerRadius="8" Padding="14">
+                <StackPanel>
+                    <TextBlock Text="RECENT ACTIVITY" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{DynamicResource Text.Muted}" Margin="0,0,0,8"/>
+                    <ItemsControl ItemsSource="{Binding RecentActivity}" MaxHeight="240">
+                        <ItemsControl.Template>
+                            <ControlTemplate TargetType="ItemsControl">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </ControlTemplate>
+                        </ItemsControl.Template>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,2">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="60"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Timestamp, StringFormat=HH:mm:ss}"
+                                               FontFamily="Consolas" FontSize="11"
+                                               Foreground="{DynamicResource Text.Muted}"/>
+                                    <Border Grid.Column="1" Padding="6,1" CornerRadius="3" Margin="6,0">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{DynamicResource Tag.CleanBg}"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Kind}" Value="Dismiss">
+                                                        <Setter Property="Background" Value="{DynamicResource Tag.DismissBg}"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock FontSize="10" FontWeight="SemiBold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="clean"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource Tag.CleanFg}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Kind}" Value="Dismiss">
+                                                            <Setter Property="Text" Value="dismiss"/>
+                                                            <Setter Property="Foreground" Value="{DynamicResource Tag.DismissFg}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                    <TextBlock Grid.Column="2" Text="{Binding Description}"
+                                               FontSize="12" TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </DockPanel>
 </Page>
