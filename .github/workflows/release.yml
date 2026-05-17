@@ -45,6 +45,7 @@ jobs:
         shell: pwsh
         run: |
           dotnet tool install --global wix
+          wix eula accept wix7
           wix extension add WixToolset.Util.wixext
           wix extension add WixToolset.UI.wixext
 
