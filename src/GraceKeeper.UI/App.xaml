@@ -9,6 +9,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/Light.xaml" />
                 <ResourceDictionary Source="Controls/AnimatedCounter.xaml" />
+                <ResourceDictionary Source="Controls/RunCleanerButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <tb:TaskbarIcon x:Key="TrayIcon"
