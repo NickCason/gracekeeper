@@ -26,6 +26,9 @@ public sealed class DashboardViewModel : ObservableObject
     private string _timeSinceLastCleanText = "no runs yet";
     private CleanerButtonState _cleanerState = CleanerButtonState.Idle;
 
+    public string Version =>
+        System.Reflection.Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "dev";
+
     public CleanerButtonState CleanerState
     {
         get => _cleanerState;

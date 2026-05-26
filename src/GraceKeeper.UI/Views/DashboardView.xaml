@@ -26,7 +26,7 @@
                     </Border>
                     <TextBlock Text="GraceKeeper" FontWeight="SemiBold" FontSize="14"
                                VerticalAlignment="Center" Margin="10,0,0,0"/>
-                    <TextBlock Text="v0.3.0" Foreground="{DynamicResource Text.Muted}" FontSize="11"
+                    <TextBlock Text="{Binding Version, Mode=OneTime, StringFormat=v{0}}" Foreground="{DynamicResource Text.Muted}" FontSize="11"
                                VerticalAlignment="Center" Margin="6,0,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">

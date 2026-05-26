@@ -21,8 +21,12 @@ Write-Host "=== GraceKeeper local build ===" -ForegroundColor Cyan
 Write-Host "Version: $Version"
 
 # 1. dotnet build (solution includes Bootstrapper now)
+# -p:Version flows $Version into AssemblyVersion + FileVersion on every project,
+# so the dashboard's UI binding (DashboardViewModel.Version) and the file's
+# Get-Item VersionInfo both report the release version instead of the SDK
+# default 1.0.0.0.
 Write-Host "`n[1/6] dotnet build (Release)..." -ForegroundColor Cyan
-dotnet build src/GraceKeeper.sln -c Release
+dotnet build src/GraceKeeper.sln -c Release -p:Version=$Version
 if ($LASTEXITCODE -ne 0) { throw "dotnet build failed" }
 
 # 2. xUnit tests
