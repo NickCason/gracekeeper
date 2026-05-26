@@ -16,12 +16,21 @@ public sealed class Win32ServiceController : IServiceController
 {
     public bool Exists(string serviceName)
     {
-        foreach (var s in ServiceController.GetServices())
+        var services = ServiceController.GetServices();
+        try
         {
-            if (string.Equals(s.ServiceName, serviceName, StringComparison.OrdinalIgnoreCase))
-                return true;
+            foreach (var s in services)
+            {
+                if (string.Equals(s.ServiceName, serviceName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
-        return false;
+        finally
+        {
+            foreach (var s in services)
+                s.Dispose();
+        }
     }
 
     public Task<bool> StopAsync(string serviceName, TimeSpan timeout, CancellationToken ct) =>
@@ -31,6 +40,7 @@ public sealed class Win32ServiceController : IServiceController
             if (sc.Status == ServiceControllerStatus.Stopped) return true;
             try { sc.Stop(); }
             catch (InvalidOperationException) { return false; }
+            catch (System.ComponentModel.Win32Exception) { return false; }
             try { sc.WaitForStatus(ServiceControllerStatus.Stopped, timeout); }
             catch (System.ServiceProcess.TimeoutException) { return false; }
             return sc.Status == ServiceControllerStatus.Stopped;
@@ -43,6 +53,7 @@ public sealed class Win32ServiceController : IServiceController
             if (sc.Status == ServiceControllerStatus.Running) return true;
             try { sc.Start(); }
             catch (InvalidOperationException) { return false; }
+            catch (System.ComponentModel.Win32Exception) { return false; }
             try { sc.WaitForStatus(ServiceControllerStatus.Running, timeout); }
             catch (System.ServiceProcess.TimeoutException) { return false; }
             return sc.Status == ServiceControllerStatus.Running;
