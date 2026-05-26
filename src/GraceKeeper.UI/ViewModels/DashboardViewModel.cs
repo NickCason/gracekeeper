@@ -110,6 +110,7 @@ public sealed class DashboardViewModel : ObservableObject
         if (CleanerState != CleanerButtonState.Idle) return;
 
         CleanerState = CleanerButtonState.Running;
+        var logWriter = new CleanerLogWriter(PathResolver.CleanerLogPath, new SystemClock());
         try
         {
             var probe = new EchoControllerProbe(new WmiProcessTreeReader());
@@ -139,7 +140,6 @@ public sealed class DashboardViewModel : ObservableObject
                 },
                 TimeSpan.FromSeconds(10));
             var cleaner = new RnlCleaner(PathResolver.RnlTargetDir, probe, bouncer);
-            var logWriter = new CleanerLogWriter(PathResolver.CleanerLogPath, new SystemClock());
 
             var runResult = await Task.Run(() => cleaner.RunAsync(mode, default));
             logWriter.WriteResult(runResult);
@@ -148,8 +148,9 @@ public sealed class DashboardViewModel : ObservableObject
             await Task.Delay(1200);
             CleanerState = CleanerButtonState.Idle;
         }
-        catch
+        catch (Exception ex)
         {
+            logWriter.WriteFailed(ex.GetType().Name, ex.Message);
             CleanerState = CleanerButtonState.Idle;
         }
     }
