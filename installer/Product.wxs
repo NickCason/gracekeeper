@@ -102,13 +102,12 @@
       <Component Id="ReadmeFile" Guid="*">
         <File Source="..\README.md" Id="README.md" KeyPath="yes"/>
       </Component>
-      <Component Id="RunRegistry" Guid="*">
-        <RegistryKey Root="HKLM" Key="Software\Microsoft\Windows\CurrentVersion\Run">
-          <RegistryValue Name="GraceKeeper"
-                         Type="string"
-                         Value="&quot;[INSTALLDIR]GraceKeeper.exe&quot;"
-                         KeyPath="yes"/>
-        </RegistryKey>
+      <!-- Autostart is now a Scheduled Task with a LogonTrigger (see
+           CreateDashboardLogonTask custom action below). The previous HKLM\Run
+           entry was subject to Windows 11 Startup Apps deferral, which delayed
+           tray-app launch by 1-3 minutes after logon. -->
+      <Component Id="LogonTaskScript" Guid="*">
+        <File Source="..\src\register-logon-task.ps1" Id="register_logon_task.ps1" Name="register-logon-task.ps1" KeyPath="yes"/>
       </Component>
     </ComponentGroup>
 
@@ -155,6 +154,20 @@
                   Impersonate="no"
                   Return="ignore"/>
 
+    <CustomAction Id="CreateDashboardLogonTask"
+                  Directory="INSTALLDIR"
+                  ExeCommand='powershell.exe -NoProfile -ExecutionPolicy Bypass -File "[INSTALLDIR]register-logon-task.ps1"'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="check"/>
+
+    <CustomAction Id="RemoveDashboardLogonTask"
+                  Directory="INSTALLDIR"
+                  ExeCommand='schtasks.exe /Delete /F /TN "GraceKeeper - Dashboard Logon"'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
     <CustomAction Id="StopDismisser"
                   Directory="INSTALLDIR"
                   ExeCommand='taskkill.exe /F /IM AutoHotkey64.exe'
@@ -177,8 +190,10 @@
     <InstallExecuteSequence>
       <Custom Action="StopDashboard"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
       <Custom Action="StopDismisser"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
-      <Custom Action="RemoveScheduledTask" Before="RemoveFiles"       Condition="REMOVE=&quot;ALL&quot;"/>
-      <Custom Action="CreateScheduledTask" After="InstallFiles"       Condition="NOT Installed"/>
+      <Custom Action="RemoveScheduledTask"      Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
+      <Custom Action="RemoveDashboardLogonTask" Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
+      <Custom Action="CreateScheduledTask"      After="InstallFiles"  Condition="NOT Installed"/>
+      <Custom Action="CreateDashboardLogonTask" After="InstallFiles"  Condition="NOT Installed"/>
     </InstallExecuteSequence>
 
   </Package>

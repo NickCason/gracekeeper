@@ -10,19 +10,49 @@ namespace GraceKeeper.UI;
 
 public partial class App : Application
 {
+    // Defer Shell_NotifyIcon(NIM_ADD) past explorer's notification-area
+    // initialization. When GraceKeeper.exe is launched via the HKLM Run key at
+    // user logon, the immediate NIM_ADD frequently races with explorer and
+    // fails silently; Hardcodet only retries on WM_TASKBARCREATED (broadcast on
+    // explorer *restart*, not on first-time init), so the icon stays missing
+    // until the user manually relaunches. A few seconds is enough to clear the
+    // race in practice without making the icon feel slow on manual launches.
+    private static readonly TimeSpan TrayCreationDelay = TimeSpan.FromSeconds(4);
+
     private TaskbarIcon? _tray;
     private ThemeMonitor? _themeMonitor;
     private MainWindow? _mainWindow;
     private DismisserSupervisor? _supervisor;
     private DispatcherTimer? _supervisorTimer;
+    private DispatcherTimer? _trayCreationTimer;
+    private SingleInstance? _singleInstance;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
+        _singleInstance = new SingleInstance("Dashboard");
+        if (!_singleInstance.IsFirstInstance)
+        {
+            _singleInstance.SignalExistingInstance();
+            _singleInstance.Dispose();
+            _singleInstance = null;
+            Shutdown();
+            return;
+        }
+        _singleInstance.ActivationRequested += (_, _) =>
+            Dispatcher.BeginInvoke(new Action(ShowMainWindow));
+
         _themeMonitor = new ThemeMonitor();
         _themeMonitor.ThemeChanged += (_, theme) => ApplyTheme(theme);
         ApplyTheme(_themeMonitor.Current);
 
-        _tray = (TaskbarIcon)FindResource("TrayIcon");
+        _trayCreationTimer = new DispatcherTimer { Interval = TrayCreationDelay };
+        _trayCreationTimer.Tick += (_, _) =>
+        {
+            _trayCreationTimer!.Stop();
+            _trayCreationTimer = null;
+            _tray = (TaskbarIcon)FindResource("TrayIcon");
+        };
+        _trayCreationTimer.Start();
 
         StartDismisserSupervisor();
         StartUpdateCheckOnce();
@@ -123,8 +153,10 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _supervisorTimer?.Stop();
+        _trayCreationTimer?.Stop();
         _themeMonitor?.Dispose();
         _tray?.Dispose();
+        _singleInstance?.Dispose();
         base.OnExit(e);
     }
 }
