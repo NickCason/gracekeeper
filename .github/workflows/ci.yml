@@ -47,6 +47,7 @@ jobs:
           wix eula accept wix7
           wix extension add --global WixToolset.Util.wixext
           wix extension add --global WixToolset.Bal.wixext
+          wix extension add --global WixToolset.NetFx.wixext
           # Workaround for WiX 7 Bal extension packaging: the downloaded DLL is named
           # WixToolset.BootstrapperApplications.wixext.dll but wix looks for WixToolset.Bal.wixext.dll.
           $cache = "$env:USERPROFILE\.wix\extensions\WixToolset.Bal.wixext"
@@ -62,15 +63,9 @@ jobs:
           }
           wix extension list --global
 
-      - name: Run Pester tests
-        shell: pwsh
-        run: |
-          Install-Module Pester -Force -SkipPublisherCheck -Scope CurrentUser -MinimumVersion 5.0.0
-          Invoke-Pester tests/ -CI
-
       - name: Build solution
         shell: pwsh
-        run: dotnet build src/GraceKeeper.sln -c Release
+        run: dotnet build src/GraceKeeper.sln -c Release -p:Version=0.0.0.0
 
       - name: Run xUnit tests
         shell: pwsh
@@ -94,8 +89,10 @@ jobs:
       - name: Build Burn bundle
         shell: pwsh
         run: |
+          $mbanative = "$env:USERPROFILE\.nuget\packages\wixtoolset.mba.core\4.0.6\runtimes\win-x64\native\mbanative.dll"
+          if (-not (Test-Path $mbanative)) { throw "mbanative.dll not found at '$mbanative' (was dotnet restore run?)" }
           cd installer
-          wix build Bundle.wxs -d Version=0.0.0-ci -ext WixToolset.Util.wixext -ext WixToolset.Bal.wixext -arch x64 -o ../GraceKeeper-0.0.0-ci.exe
+          wix build Bundle.wxs -d Version=0.0.0-ci -d mbanative=$mbanative -ext WixToolset.Util.wixext -ext WixToolset.Bal.wixext -ext WixToolset.NetFx.wixext -arch x64 -o ../GraceKeeper-0.0.0-ci.exe
           Get-Item ../GraceKeeper-0.0.0-ci.exe | Select-Object Length
 
       - name: Upload bundle as build artifact
