@@ -26,6 +26,7 @@ public partial class App : Application
     private DispatcherTimer? _supervisorTimer;
     private DispatcherTimer? _trayCreationTimer;
     private SingleInstance? _singleInstance;
+    private CleanupScheduler? _cleanupScheduler;
 
     private void OnStartup(object sender, StartupEventArgs e)
     {
@@ -55,6 +56,7 @@ public partial class App : Application
         _trayCreationTimer.Start();
 
         StartDismisserSupervisor();
+        StartCleanupSchedulerOnce();
         StartUpdateCheckOnce();
     }
 
@@ -77,6 +79,29 @@ public partial class App : Application
         _supervisorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(30) };
         _supervisorTimer.Tick += (_, _) => _supervisor.EnsureRunning();
         _supervisorTimer.Start();
+    }
+
+    private void StartCleanupSchedulerOnce()
+    {
+        var probe = new EchoControllerProbe(new WmiProcessTreeReader());
+        var bouncer = new ServiceBouncer(
+            new Win32ServiceController(),
+            new[]
+            {
+                "FactoryTalk Logix Echo Message Broker",
+                "FactoryTalk Logix Echo Service",
+                "FactoryTalk Activation Service",
+                "FTActivationBoost"
+            },
+            TimeSpan.FromSeconds(10));
+        var cleaner = new RnlCleaner(PathResolver.RnlTargetDir, probe, bouncer);
+        var logWriter = new CleanerLogWriter(PathResolver.CleanerLogPath, new SystemClock());
+        _cleanupScheduler = new CleanupScheduler(
+            cleaner,
+            logWriter,
+            intervalHoursProvider: () => new ConfigStore(PathResolver.ConfigPath).Load().Cleaner.IntervalHours,
+            launchDelay: TimeSpan.FromSeconds(30));
+        _cleanupScheduler.Start();
     }
 
     private void StartUpdateCheckOnce()
@@ -157,6 +182,7 @@ public partial class App : Application
         _themeMonitor?.Dispose();
         _tray?.Dispose();
         _singleInstance?.Dispose();
+        _cleanupScheduler?.Dispose();
         base.OnExit(e);
     }
 }

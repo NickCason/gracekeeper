@@ -11,6 +11,7 @@ public sealed class ConfigModel
     public Counters Counters { get; set; } = new();
     public LogOffsets LogOffsets { get; set; } = new();
     public UpdateCheckConfig UpdateCheck { get; set; } = new();
+    public CleanerConfig Cleaner { get; set; } = new();
 }
 
 public sealed class ScheduleConfig
@@ -36,4 +37,9 @@ public sealed class UpdateCheckConfig
     public bool Enabled { get; set; } = true;
     [JsonPropertyName("last_checked_utc")] public DateTime? LastCheckedUtc { get; set; }
     [JsonPropertyName("latest_known_version")] public string? LatestKnownVersion { get; set; }
+}
+
+public sealed class CleanerConfig
+{
+    [JsonPropertyName("interval_hours")] public int IntervalHours { get; set; } = 12;
 }
