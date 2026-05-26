@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0.0] - 2026-05-26
+
+### Fixed
+- **Auto-cleanup actually runs now.** The v0.3.x scheduled task was created via `schtasks /Create /SC HOURLY` which bakes in CLI defaults that silently dropped missed runs: `DisallowStartIfOnBatteries=true`, `StopIfGoingOnBatteries=true`, and no `StartWhenAvailable`. On any workstation that sleeps overnight or goes mobile, the task could go days without firing. The new tasks are registered from inline XML with all three of those reversed plus `<StartWhenAvailable>true</StartWhenAvailable>` so missed runs catch up when the machine wakes.
+- **In-place upgrade from v0.3.x now works.** Historical releases shipped with non-numeric version labels (`0.3.0.3-logontask`, `0.2.1-singleinst`) which WiX warned about as undefined MSI behavior — MSI's `MajorUpgrade` couldn't compare those reliably, which is why users had to manually uninstall before upgrading. `scripts/build-local.ps1` now rejects any non-numeric version at build time so this can't recur.
+- **Dashboard version label updates with the release.** Previously hardcoded to `v0.3.0` and never bumped; now binds to `Assembly.GetEntryAssembly().GetName().Version`, fed by `-p:Version=$Version` on the SDK build.
+
+### Added
+- **Three independent cleanup triggers, one code path.** A new `GraceKeeper.Cleaner.exe` console (mode `boot` or `safety-net`) is invoked by two SYSTEM-context scheduled tasks: `GraceKeeper - Boot Cleanup` (fires on Windows boot before user logon) and `GraceKeeper - Cleanup RNL` (fires every 12h regardless of tray state). The tray app drives in-process cleanup via a `DispatcherTimer` that ticks at app-launch + every `IntervalHours` (default 12). The safety-net schtask self-suppresses if the tray already cleaned within the last 11 hours.
+- **Echo-busy guard.** `EchoControllerProbe` enumerates child processes of `EmulateService.exe` to detect active emulated controllers. In `Runtime` and `SafetyNet` modes, if any controller is running, the cleaner defers locked files rather than bouncing services (which would fault the controller). `Boot` and `ManualForce` modes bypass the guard. The dashboard's "Run cleaner now" button shows a confirm modal when Echo is busy.
+- **Service-bounce fallback.** When the lock-retry loop (3 attempts at 200ms backoff) can't free a file and the mode allows it, `ServiceBouncer` stops Echo Message Broker → Echo Service → FT Activation Service → FT Activation Helper, retries the deletion, then starts them back up in reverse order (Helper-before-Service per Rockwell's documented restart sequence).
+- **`GraceKeeper.Cleaner.exe`.** New ~50-line headless .NET 4.8 console binary, shipped beside the tray app, used by both SYSTEM-context scheduled tasks. Top-level try/catch always logs `failed: <type>: <message>` so cron-style failures are visible from the dashboard activity panel.
+
+### Changed
+- **`rnl-cleaner.ps1` retired.** The PowerShell cleaner script and its Pester test file are gone; xUnit (against `GraceKeeper.Core`) is the only test layer now. Pester step removed from `scripts/build-local.ps1`.
+- **Dashboard counter renamed.** "RNL files deleted" → "RNL files refreshed" (more accurate — the activation service regenerates the .rnl on the next client poll; the deletion is a *refresh*, not a removal).
+- **`cleaner.log` format.** New structured line: `refreshed=N | freed-by-bounce=M | deferred=K | still-locked=L | duration=Xms`. The dashboard's regex accepts both new and legacy `deleted=N` formats so counters survive the upgrade.
+- **Settings/interval routing.** Cleaner interval (now in hours, default 12) persists to `config.json` under `Cleaner.IntervalHours`. The in-process scheduler re-reads it on every tick — no schtask mutation required.
+
+### Removed
+- `src/rnl-cleaner.ps1` (replaced by C# `RnlCleaner` in Core)
+- `tests/rnl-cleaner.Tests.ps1` (Pester suite — no PowerShell to test)
+- `[1/7] Pester tests` step in `scripts/build-local.ps1` (renumbered to 6 steps)
+- The old `CreateScheduledTask` + `RemoveScheduledTask` WiX CustomActions; replaced with PowerShell-driven `CreateCleanerTasks` + `RemoveCleanupTask` + `RemoveBootCleanupTask`.
+
 ## [0.2.1] - 2026-05-17
 
 ### Fixed
