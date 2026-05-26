@@ -15,12 +15,7 @@ public interface IRnlCleaner
 
 public sealed class RnlCleaner : IRnlCleaner
 {
-    private static readonly TimeSpan[] RetryDelays = new[]
-    {
-        TimeSpan.Zero,
-        TimeSpan.FromMilliseconds(200),
-        TimeSpan.FromMilliseconds(400)
-    };
+    private const int RetryAttempts = 3;
 
     private readonly string _targetDir;
     private readonly IEchoControllerProbe _echoProbe;
@@ -59,17 +54,17 @@ public sealed class RnlCleaner : IRnlCleaner
         if (locked.Count == 0)
             return new CleanupResult(refreshed, 0, 0, Array.Empty<string>(), null, 0, sw.Elapsed);
 
+        var activity = _echoProbe.GetActivity();
         var bounceEligible = mode switch
         {
             CleanupMode.Boot => true,
             CleanupMode.ManualForce => true,
-            CleanupMode.Runtime or CleanupMode.SafetyNet => _echoProbe.GetActivity().Count == 0,
+            CleanupMode.Runtime or CleanupMode.SafetyNet => activity.Count == 0,
             _ => false
         };
 
         if (!bounceEligible)
         {
-            var activity = _echoProbe.GetActivity();
             var reason = "echo-busy: " + string.Join(",", activity.FamilyNames);
             return new CleanupResult(
                 refreshed, 0, locked.Count,
@@ -80,6 +75,10 @@ public sealed class RnlCleaner : IRnlCleaner
         var bounceResult = await _bouncer.BounceAndRetryAsync(
             async () =>
             {
+                // No cancellation check between files here: services are already
+                // stopped; abandoning mid-sweep would leave them down with files
+                // still locked. Caller-driven cancellation is honored via the outer
+                // ct → ServiceBouncer's start phase.
                 var freed = 0;
                 var still = new List<string>();
                 foreach (var f in locked)
@@ -100,7 +99,7 @@ public sealed class RnlCleaner : IRnlCleaner
 
     private async Task<bool> TryDeleteWithRetries(string path, CancellationToken ct)
     {
-        for (int attempt = 0; attempt < RetryDelays.Length; attempt++)
+        for (int attempt = 0; attempt < RetryAttempts; attempt++)
         {
             if (attempt > 0) await Task.Delay(_retryDelay, ct);
             try { File.Delete(path); return true; }
