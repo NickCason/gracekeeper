@@ -42,12 +42,15 @@ jobs:
       - name: Install WiX
         shell: pwsh
         run: |
-          dotnet tool install --global wix
+          # Pin to 4.0.6 — matches local toolchain; v5+ changed
+          # BootstrapperApplication schema (Name/SourceFile required) and would
+          # break Bundle.wxs.
+          dotnet tool install --global wix --version 4.0.6
           wix --version
           wix eula accept wix7
-          wix extension add --global WixToolset.Util.wixext
-          wix extension add --global WixToolset.Bal.wixext
-          wix extension add --global WixToolset.NetFx.wixext
+          wix extension add --global WixToolset.Util.wixext/4.0.6
+          wix extension add --global WixToolset.Bal.wixext/4.0.6
+          wix extension add --global WixToolset.NetFx.wixext/4.0.6
           # Workaround for WiX 7 Bal extension packaging: the downloaded DLL is named
           # WixToolset.BootstrapperApplications.wixext.dll but wix looks for WixToolset.Bal.wixext.dll.
           $cache = "$env:USERPROFILE\.wix\extensions\WixToolset.Bal.wixext"
