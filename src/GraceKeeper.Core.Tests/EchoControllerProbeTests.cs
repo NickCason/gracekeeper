@@ -61,6 +61,17 @@ public class EchoControllerProbeTests
     }
 
     [Fact]
+    public void ProcessNamedExactlyEmulateExe_IsNotCountedAsController()
+    {
+        var probe = Build(
+            new ProcessInfo(EmulateServicePid, 4, "EmulateService.exe"),
+            new ProcessInfo(99998, EmulateServicePid, "Emulate.exe"));
+        var a = probe.GetActivity();
+        Assert.Equal(0, a.Count);
+        Assert.Empty(a.FamilyNames);
+    }
+
+    [Fact]
     public void TwoControllers_CountsBoth_FamiliesAreUnique()
     {
         var probe = Build(

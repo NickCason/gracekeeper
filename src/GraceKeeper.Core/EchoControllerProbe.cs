@@ -32,7 +32,8 @@ public sealed class EchoControllerProbe : IEchoControllerProbe
         var families = all
             .Where(p => p.ParentPid == emulateSvc.Pid)
             .Where(p => p.Name.StartsWith("Emulate", System.StringComparison.OrdinalIgnoreCase)
-                     && p.Name.EndsWith(".exe", System.StringComparison.OrdinalIgnoreCase))
+                     && p.Name.EndsWith(".exe", System.StringComparison.OrdinalIgnoreCase)
+                     && p.Name.Length > "Emulate".Length + ".exe".Length)
             .Select(p => p.Name.Substring("Emulate".Length, p.Name.Length - "Emulate".Length - ".exe".Length))
             .ToList();
 
