@@ -93,8 +93,11 @@
       <Component Id="DismisserAhk" Guid="*">
         <File Source="..\src\popup-dismisser.ahk" Id="popup_dismisser.ahk" Name="popup-dismisser.ahk" KeyPath="yes"/>
       </Component>
-      <Component Id="CleanerPs1" Guid="*">
-        <File Source="..\src\rnl-cleaner.ps1" Id="rnl_cleaner.ps1" Name="rnl-cleaner.ps1" KeyPath="yes"/>
+      <Component Id="CleanerExe" Guid="*">
+        <File Source="..\src\GraceKeeper.Cleaner\bin\Release\net48\GraceKeeper.Cleaner.exe" Id="GraceKeeper.Cleaner.exe" KeyPath="yes"/>
+      </Component>
+      <Component Id="CleanerTasksScript" Guid="*">
+        <File Source="..\src\register-cleaner-tasks.ps1" Id="register_cleaner_tasks.ps1" Name="register-cleaner-tasks.ps1" KeyPath="yes"/>
       </Component>
       <Component Id="LicenseFile" Guid="*">
         <File Source="..\LICENSE" Id="LICENSE" KeyPath="yes"/>
@@ -140,16 +143,23 @@
       </Component>
     </ComponentGroup>
 
-    <CustomAction Id="CreateScheduledTask"
+    <CustomAction Id="CreateCleanerTasks"
                   Directory="INSTALLDIR"
-                  ExeCommand="schtasks.exe /Create /F /TN &quot;GraceKeeper - Cleanup RNL&quot; /TR &quot;powershell.exe -NoProfile -ExecutionPolicy Bypass -File '[INSTALLDIR]rnl-cleaner.ps1'&quot; /SC HOURLY /MO 12 /RU SYSTEM /ST 03:00"
+                  ExeCommand='powershell.exe -NoProfile -ExecutionPolicy Bypass -File "[INSTALLDIR]register-cleaner-tasks.ps1"'
                   Execute="deferred"
                   Impersonate="no"
                   Return="check"/>
 
-    <CustomAction Id="RemoveScheduledTask"
+    <CustomAction Id="RemoveCleanupTask"
                   Directory="INSTALLDIR"
                   ExeCommand='schtasks.exe /Delete /F /TN "GraceKeeper - Cleanup RNL"'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
+    <CustomAction Id="RemoveBootCleanupTask"
+                  Directory="INSTALLDIR"
+                  ExeCommand='schtasks.exe /Delete /F /TN "GraceKeeper - Boot Cleanup"'
                   Execute="deferred"
                   Impersonate="no"
                   Return="ignore"/>
@@ -190,9 +200,10 @@
     <InstallExecuteSequence>
       <Custom Action="StopDashboard"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
       <Custom Action="StopDismisser"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
-      <Custom Action="RemoveScheduledTask"      Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
+      <Custom Action="RemoveCleanupTask"        Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
+      <Custom Action="RemoveBootCleanupTask"    Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
       <Custom Action="RemoveDashboardLogonTask" Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
-      <Custom Action="CreateScheduledTask"      After="InstallFiles"  Condition="NOT Installed"/>
+      <Custom Action="CreateCleanerTasks"       After="InstallFiles"  Condition="NOT Installed"/>
       <Custom Action="CreateDashboardLogonTask" After="InstallFiles"  Condition="NOT Installed"/>
     </InstallExecuteSequence>
 
