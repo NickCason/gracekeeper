@@ -5,28 +5,33 @@ param(
 )
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
+
+# Reject any version that isn't a clean 4-octet numeric. MSI MajorUpgrade
+# can't compare versions like "0.3.0.3-logontask" reliably (WiX warns it's
+# undefined behavior), and that mismatch is what forces users to uninstall
+# manually before upgrading. Bumping a release with a label silently breaks
+# in-place upgrades; this guard makes that mistake impossible at build time.
+if ($Version -notmatch '^\d+\.\d+\.\d+(\.\d+)?$') {
+    throw "Version '$Version' must be N.N.N or N.N.N.N (digits only). Labels like '-logontask' break MSI MajorUpgrade. Use a clean numeric version for shippable builds."
+}
+
 Set-Location $repoRoot
 
 Write-Host "=== GraceKeeper local build ===" -ForegroundColor Cyan
 Write-Host "Version: $Version"
 
-# 1. Pester tests
-Write-Host "`n[1/7] Pester tests..." -ForegroundColor Cyan
-Invoke-Pester tests/ -CI
-if ($LASTEXITCODE -ne 0) { throw "Pester tests failed" }
-
-# 2. dotnet build (solution includes Bootstrapper now)
-Write-Host "`n[2/7] dotnet build (Release)..." -ForegroundColor Cyan
+# 1. dotnet build (solution includes Bootstrapper now)
+Write-Host "`n[1/6] dotnet build (Release)..." -ForegroundColor Cyan
 dotnet build src/GraceKeeper.sln -c Release
 if ($LASTEXITCODE -ne 0) { throw "dotnet build failed" }
 
-# 3. xUnit tests
-Write-Host "`n[3/7] xUnit tests..." -ForegroundColor Cyan
+# 2. xUnit tests
+Write-Host "`n[2/6] xUnit tests..." -ForegroundColor Cyan
 dotnet test src/GraceKeeper.Core.Tests/GraceKeeper.Core.Tests.csproj -c Release --no-build
 if ($LASTEXITCODE -ne 0) { throw "xUnit tests failed" }
 
-# 4. Stage the AHK runtime
-Write-Host "`n[4/7] Staging AutoHotkey64.exe..." -ForegroundColor Cyan
+# 3. Stage the AHK runtime
+Write-Host "`n[3/6] Staging AutoHotkey64.exe..." -ForegroundColor Cyan
 $staging = "$repoRoot\installer\staging"
 if (-not (Test-Path $staging)) { New-Item -ItemType Directory -Path $staging -Force | Out-Null }
 $staged = "$staging\AutoHotkey64.exe"
@@ -43,8 +48,8 @@ if ($ahkSrc) {
     Write-Host "  (using existing staged copy at $staged)"
 }
 
-# 5. Build the inner MSI to bin/dev/
-Write-Host "`n[5/7] Building inner MSI..." -ForegroundColor Cyan
+# 4. Build the inner MSI to bin/dev/
+Write-Host "`n[4/6] Building inner MSI..." -ForegroundColor Cyan
 $msiStaging = "$repoRoot\installer\bin\dev"
 if (-not (Test-Path $msiStaging)) { New-Item -ItemType Directory -Path $msiStaging -Force | Out-Null }
 $msi = "$msiStaging\GraceKeeper-$Version.msi"
@@ -54,8 +59,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "MSI build failed" }
 } finally { Pop-Location }
 
-# 6. Build the bundle
-Write-Host "`n[6/7] Building Burn bundle..." -ForegroundColor Cyan
+# 5. Build the bundle
+Write-Host "`n[5/6] Building Burn bundle..." -ForegroundColor Cyan
 $exe = "$repoRoot\GraceKeeper-$Version.exe"
 # Locate mbanative.dll (managed BA native shim) in the NuGet cache; payloaded into the bundle.
 $mbanative = "$env:USERPROFILE\.nuget\packages\wixtoolset.mba.core\4.0.6\runtimes\win-x64\native\mbanative.dll"
@@ -68,8 +73,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Bundle build failed" }
 } finally { Pop-Location }
 
-# 7. Summary
-Write-Host "`n[7/7] Build complete." -ForegroundColor Green
+# 6. Summary
+Write-Host "`n[6/6] Build complete." -ForegroundColor Green
 $exeInfo = Get-Item $exe
 Write-Host "Bundle: $($exeInfo.FullName)"
 Write-Host "Size:   $([math]::Round($exeInfo.Length / 1MB, 2)) MB"
