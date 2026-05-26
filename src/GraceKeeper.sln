@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraceKeeper.UI", "GraceKeep
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraceKeeper.Bootstrapper", "GraceKeeper.Bootstrapper\GraceKeeper.Bootstrapper.csproj", "{FF606BC6-11AD-4C94-97DF-2DA072250F2C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraceKeeper.Cleaner", "GraceKeeper.Cleaner\GraceKeeper.Cleaner.csproj", "{B6186151-01E7-46F6-90AE-F424FC6044B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{FF606BC6-11AD-4C94-97DF-2DA072250F2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FF606BC6-11AD-4C94-97DF-2DA072250F2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FF606BC6-11AD-4C94-97DF-2DA072250F2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B6186151-01E7-46F6-90AE-F424FC6044B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B6186151-01E7-46F6-90AE-F424FC6044B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B6186151-01E7-46F6-90AE-F424FC6044B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B6186151-01E7-46F6-90AE-F424FC6044B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
