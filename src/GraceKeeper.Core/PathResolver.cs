@@ -15,4 +15,18 @@ public static class PathResolver
     public static string DisabledSentinelPath => Path.Combine(ProgramDataRoot, "DISABLED");
     public static string SupervisorLogPath => Path.Combine(LogsDir, "supervisor.log");
     public static string DismisserPidFilePath => Path.Combine(ProgramDataRoot, "dismisser-pid.json");
+
+    public static string RnlTargetDir =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+            "Rockwell Automation",
+            "FactoryTalk Activation");
+
+    public static string InstallDir =>
+        Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+            "GraceKeeper");
+
+    public static string CleanerExePath =>
+        Path.Combine(InstallDir, "GraceKeeper.Cleaner.exe");
 }
