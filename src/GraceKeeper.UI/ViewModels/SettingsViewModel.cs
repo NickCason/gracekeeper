@@ -8,12 +8,11 @@ namespace GraceKeeper.UI.ViewModels;
 public sealed class SettingsViewModel : ObservableObject
 {
     private readonly ConfigStore _store;
-    private readonly ScheduledTaskClient _scheduler;
-    private int _intervalMinutes;
+    private int _intervalHours;
     private string _startTime = "03:00";
     private string _theme = "auto";
 
-    public int IntervalMinutes { get => _intervalMinutes; set => Set(ref _intervalMinutes, value); }
+    public int IntervalHours { get => _intervalHours; set => Set(ref _intervalHours, value); }
     public string StartTime { get => _startTime; set => Set(ref _startTime, value); }
     public string Theme { get => _theme; set => Set(ref _theme, value); }
 
@@ -23,25 +22,24 @@ public sealed class SettingsViewModel : ObservableObject
     public SettingsViewModel()
     {
         _store = new ConfigStore(PathResolver.ConfigPath);
-        _scheduler = new ScheduledTaskClient("GraceKeeper - Cleanup RNL");
         var cfg = _store.Load();
-        _intervalMinutes = cfg.Schedule.IntervalMinutes;
+        _intervalHours = cfg.Cleaner.IntervalHours;
         _startTime = cfg.Schedule.StartTime;
         _theme = cfg.Theme;
     }
 
-    public async Task SaveAsync()
+    public Task SaveAsync()
     {
         var cfg = _store.Load();
-        cfg.Schedule.IntervalMinutes = IntervalMinutes;
+        cfg.Cleaner.IntervalHours = IntervalHours;
         cfg.Schedule.StartTime = StartTime;
         cfg.Theme = Theme;
         _store.Save(cfg);
-        // Best-effort: if the scheduled task doesn't exist yet (e.g. first install hasn't completed),
-        // these calls fail silently (schtasks returns non-zero). That's fine — config.json is the
-        // source of truth and the task gets the values on next install/upgrade.
-        try { await _scheduler.ChangeIntervalAsync(IntervalMinutes); } catch { }
-        try { await _scheduler.ChangeStartTimeAsync(StartTime); } catch { }
+        // The CleanupScheduler re-reads IntervalHours from config on every tick via its
+        // intervalHoursProvider delegate — no further action needed here.
+        // The schtask is registered at install time with a fixed schedule and is never
+        // updated by the dashboard in v0.4.
+        return Task.CompletedTask;
     }
 }
 

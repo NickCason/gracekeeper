@@ -27,9 +27,9 @@
                             <ColumnDefinition Width="200"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="Cleaner interval (minutes)" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Text="Cleaner interval (hours)" VerticalAlignment="Center"/>
                         <TextBox Grid.Column="1"
-                                 Text="{Binding IntervalMinutes, UpdateSourceTrigger=PropertyChanged}"
+                                 Text="{Binding IntervalHours, UpdateSourceTrigger=PropertyChanged}"
                                  Width="100" HorizontalAlignment="Left"/>
                     </Grid>
                     <Grid>
