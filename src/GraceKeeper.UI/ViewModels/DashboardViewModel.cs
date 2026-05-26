@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Threading;
 using GraceKeeper.Core;
 
@@ -14,9 +15,8 @@ public sealed class DashboardViewModel : ObservableObject
     private readonly LogTailer _cleanerTailer;
     private readonly ConfigStore _configStore;
     private readonly DisabledSentinel _sentinel;
-    private readonly ScheduledTaskClient _scheduler;
     private readonly DispatcherTimer _pollTimer;
-    private static readonly Regex _deletedCountRegex = new(@"deleted=(\d+)", RegexOptions.Compiled);
+    private static readonly Regex _deletedCountRegex = new(@"(?:deleted|refreshed)=(\d+)", RegexOptions.Compiled);
 
     private long _popupsDismissedLifetime;
     private long _rnlFilesDeletedLifetime;
@@ -47,7 +47,6 @@ public sealed class DashboardViewModel : ObservableObject
         _dismisserTailer = new LogTailer(PathResolver.DismisserLogPath);
         _cleanerTailer = new LogTailer(PathResolver.CleanerLogPath);
         _sentinel = new DisabledSentinel(PathResolver.DisabledSentinelPath);
-        _scheduler = new ScheduledTaskClient("GraceKeeper - Cleanup RNL");
 
         var cfg = _configStore.Load();
         _popupsDismissedLifetime = cfg.Counters.PopupsDismissedLifetime;
@@ -110,28 +109,44 @@ public sealed class DashboardViewModel : ObservableObject
     {
         if (CleanerState != CleanerButtonState.Idle) return;
 
-        var cfg = _configStore.Load();
-        var startOffset = cfg.LogOffsets.CleanerLogOffset;
-
         CleanerState = CleanerButtonState.Running;
         try
         {
-            await _scheduler.RunNowAsync();
-
-            var watcher = new CleanerCompletionWatcher(PathResolver.CleanerLogPath);
-            var result = await watcher.WaitAsync(startOffset, TimeSpan.FromSeconds(60), default);
-
-            if (result == CleanerCompletionResult.Completed)
+            var probe = new EchoControllerProbe(new WmiProcessTreeReader());
+            var activity = probe.GetActivity();
+            var mode = CleanupMode.Runtime;
+            if (activity.Count > 0)
             {
-                CleanerState = CleanerButtonState.Done;
-                await Task.Delay(1200);
-                CleanerState = CleanerButtonState.Idle;
+                var families = string.Join(", ", activity.FamilyNames);
+                var msg = $"Echo has {activity.Count} active controller(s) ({families}). Cleanup may fault them if a service bounce becomes necessary.";
+                var result = MessageBox.Show(msg, "Confirm Run Cleaner", MessageBoxButton.OKCancel, MessageBoxImage.Warning);
+                if (result != MessageBoxResult.OK)
+                {
+                    CleanerState = CleanerButtonState.Idle;
+                    return;
+                }
+                mode = CleanupMode.ManualForce;
             }
-            else
-            {
-                // timed out — fall back to Idle (don't claim success)
-                CleanerState = CleanerButtonState.Idle;
-            }
+
+            var bouncer = new ServiceBouncer(
+                new Win32ServiceController(),
+                new[]
+                {
+                    "FactoryTalk Logix Echo Message Broker",
+                    "FactoryTalk Logix Echo Service",
+                    "FactoryTalk Activation Service",
+                    "FTActivationBoost"
+                },
+                TimeSpan.FromSeconds(10));
+            var cleaner = new RnlCleaner(PathResolver.RnlTargetDir, probe, bouncer);
+            var logWriter = new CleanerLogWriter(PathResolver.CleanerLogPath, new SystemClock());
+
+            var runResult = await Task.Run(() => cleaner.RunAsync(mode, default));
+            logWriter.WriteResult(runResult);
+
+            CleanerState = CleanerButtonState.Done;
+            await Task.Delay(1200);
+            CleanerState = CleanerButtonState.Idle;
         }
         catch
         {
