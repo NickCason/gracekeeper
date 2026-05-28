@@ -164,6 +164,13 @@
                   Impersonate="no"
                   Return="ignore"/>
 
+    <CustomAction Id="RemoveManualCleanupTask"
+                  Directory="INSTALLDIR"
+                  ExeCommand='schtasks.exe /Delete /F /TN "GraceKeeper - Manual Cleanup"'
+                  Execute="deferred"
+                  Impersonate="no"
+                  Return="ignore"/>
+
     <CustomAction Id="CreateDashboardLogonTask"
                   Directory="INSTALLDIR"
                   ExeCommand='powershell.exe -NoProfile -ExecutionPolicy Bypass -File "[INSTALLDIR]register-logon-task.ps1"'
@@ -202,6 +209,7 @@
       <Custom Action="StopDismisser"       Before="RemoveFiles"       Condition="Installed AND (REMOVE=&quot;ALL&quot; OR UPGRADINGPRODUCTCODE)"/>
       <Custom Action="RemoveCleanupTask"        Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
       <Custom Action="RemoveBootCleanupTask"    Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
+      <Custom Action="RemoveManualCleanupTask"  Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
       <Custom Action="RemoveDashboardLogonTask" Before="RemoveFiles"  Condition="REMOVE=&quot;ALL&quot;"/>
       <Custom Action="CreateCleanerTasks"       After="InstallFiles"  Condition="NOT Installed"/>
       <Custom Action="CreateDashboardLogonTask" After="InstallFiles"  Condition="NOT Installed"/>

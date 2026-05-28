@@ -64,14 +64,46 @@
         </Border>
 
         <!-- Action row pinned to bottom -->
-        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,12,0,0">
-            <ctl:RunCleanerButton State="{Binding CleanerState}" Click="RunCleaner_Click"/>
-            <Button Content="Pause" Background="{DynamicResource Button.SecondaryBg}"
-                    Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
-                    BorderBrush="{DynamicResource Border.Default}" Click="Pause_Click"/>
-            <Button Content="Settings" Background="{DynamicResource Button.SecondaryBg}"
-                    Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
-                    BorderBrush="{DynamicResource Border.Default}" Click="Settings_Click"/>
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal">
+                <ctl:RunCleanerButton State="{Binding CleanerState}"
+                                      Click="RunCleaner_Click"
+                                      ToolTip="{Binding LastCleanerOutcome}"/>
+                <Button Content="Pause" Background="{DynamicResource Button.SecondaryBg}"
+                        Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
+                        BorderBrush="{DynamicResource Border.Default}" Click="Pause_Click"/>
+                <Button Content="Settings" Background="{DynamicResource Button.SecondaryBg}"
+                        Foreground="{DynamicResource Text.Primary}" Padding="14,8" Margin="8,0,0,0"
+                        BorderBrush="{DynamicResource Border.Default}" Click="Settings_Click"/>
+                <TextBlock Text="{Binding LastCleanerOutcome}" Margin="14,0,0,0"
+                           VerticalAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource Text.Muted}"
+                           TextTrimming="CharacterEllipsis" MaxWidth="380"/>
+            </StackPanel>
+
+            <!-- Diagnostics row: lets the user (or the user's colleague) collect
+                 logs and machine state for a triage report when something looks
+                 off and remote access isn't available. -->
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <TextBlock Text="DIAGNOSTICS" FontSize="10" FontWeight="SemiBold"
+                           Foreground="{DynamicResource Text.Muted}"
+                           VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <Button Content="Open log folder"
+                        Background="{DynamicResource Button.SecondaryBg}"
+                        Foreground="{DynamicResource Text.Primary}"
+                        BorderBrush="{DynamicResource Border.Default}"
+                        Padding="10,5" Click="OpenLogs_Click"/>
+                <Button Content="Copy diagnostics to clipboard"
+                        Background="{DynamicResource Button.SecondaryBg}"
+                        Foreground="{DynamicResource Text.Primary}"
+                        BorderBrush="{DynamicResource Border.Default}"
+                        Padding="10,5" Margin="8,0,0,0"
+                        Click="CopyDiagnostics_Click"/>
+                <TextBlock Text="{Binding DiagnosticsStatus}" Margin="12,0,0,0"
+                           VerticalAlignment="Center" FontSize="11"
+                           Foreground="{DynamicResource Text.Muted}"
+                           TextTrimming="CharacterEllipsis" MaxWidth="380"/>
+            </StackPanel>
         </StackPanel>
 
         <!-- Hero metric cards + activity log -->

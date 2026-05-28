@@ -59,6 +59,7 @@ public sealed class RnlCleaner : IRnlCleaner
         {
             CleanupMode.Boot => true,
             CleanupMode.ManualForce => true,
+            CleanupMode.Manual => true,
             CleanupMode.Runtime or CleanupMode.SafetyNet => activity.Count == 0,
             _ => false
         };

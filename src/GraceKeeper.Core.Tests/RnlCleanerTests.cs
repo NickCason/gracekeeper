@@ -94,6 +94,20 @@ public class RnlCleanerTests : IDisposable
     }
 
     [Fact]
+    public async Task ManualMode_BypassesEchoGuard_LikeBoot()
+    {
+        WriteRnl("a.rnl");
+        var locked = WriteRnl("b.rnl");
+        using var hold = new FileStream(locked, FileMode.Open, FileAccess.Read, FileShare.Read);
+        var bouncer = new Mock<IServiceBouncer>();
+        bouncer.Setup(b => b.BounceAndRetryAsync(It.IsAny<Func<Task<RetryOutcome>>>(), It.IsAny<CancellationToken>()))
+               .ReturnsAsync(new BounceResult(0, new[] { "b.rnl" }));
+        var cleaner = new RnlCleaner(_targetDir, Probe(1, "CompactLogix5380"), bouncer.Object, retryDelay: TimeSpan.Zero);
+        await cleaner.RunAsync(CleanupMode.Manual, default);
+        bouncer.Verify(b => b.BounceAndRetryAsync(It.IsAny<Func<Task<RetryOutcome>>>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
     public async Task ManualForceMode_BypassesEchoGuard()
     {
         WriteRnl("a.rnl");

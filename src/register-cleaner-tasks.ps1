@@ -83,7 +83,16 @@ $intervalTrigger = @'
     </TimeTrigger>
 '@
 
-Register-Task -Name 'GraceKeeper - Boot Cleanup' -Xml (New-TaskXml -Trigger $bootTrigger  -Arguments '--mode boot')
-Register-Task -Name 'GraceKeeper - Cleanup RNL'  -Xml (New-TaskXml -Trigger $intervalTrigger -Arguments '--mode safety-net')
+# Manual task has no triggers: the dashboard fires it via
+# `schtasks /Run /TN "GraceKeeper - Manual Cleanup"` when the user clicks
+# "Run Cleaner Now". Runs as SYSTEM so it can delete RNL files whose ACL
+# only grants Delete to SYSTEM/Administrators — the in-process call from
+# the dashboard (user context) silently failed UnauthorizedAccessException
+# and made the button look successful while doing nothing.
+$noTrigger = '<TimeTrigger><StartBoundary>2100-01-01T00:00:00</StartBoundary><Enabled>false</Enabled></TimeTrigger>'
+
+Register-Task -Name 'GraceKeeper - Boot Cleanup'   -Xml (New-TaskXml -Trigger $bootTrigger     -Arguments '--mode boot')
+Register-Task -Name 'GraceKeeper - Cleanup RNL'    -Xml (New-TaskXml -Trigger $intervalTrigger -Arguments '--mode safety-net')
+Register-Task -Name 'GraceKeeper - Manual Cleanup' -Xml (New-TaskXml -Trigger $noTrigger       -Arguments '--mode manual')
 
 exit 0

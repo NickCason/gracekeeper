@@ -162,7 +162,10 @@ public partial class App : Application
 
     private async void RunCleanerNow_Click(object sender, RoutedEventArgs e)
     {
-        var scheduler = new ScheduledTaskClient("GraceKeeper - Cleanup RNL");
+        // Use the Manual task (--mode manual, no safety-net gate, SYSTEM context)
+        // not "Cleanup RNL" — that one is --mode safety-net and skips if a run
+        // happened within the last 11h, defeating the "run it now" intent.
+        var scheduler = new ScheduledTaskClient("GraceKeeper - Manual Cleanup");
         try { await scheduler.RunNowAsync(); } catch { /* task may not exist yet */ }
     }
     private void Exit_Click(object sender, RoutedEventArgs e) => Shutdown();

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-28
+
+### Fixed
+- **"Run cleaner now" actually deletes files.** The dashboard's button invoked `RnlCleaner` in-process as the interactive user. The `.rnl` files in `C:\ProgramData\Rockwell Automation\FactoryTalk Activation\` are deletable only by `NT AUTHORITY\SYSTEM` and `BUILTIN\Administrators` (Users get ReadAndExecute + Write but no Delete). `File.Delete` threw `UnauthorizedAccessException`, which `TryDeleteWithRetries` swallowed silently — files landed on the "locked" list, bounce was either skipped or failed too, and the button still went green. The dashboard now triggers a new SYSTEM-context scheduled task `GraceKeeper - Manual Cleanup` (no triggers, fired by `schtasks /Run`), watches `cleaner.log` for the result, and shows real outcomes: green only when files were actually refreshed, red when the cleaner reports `still-locked=N` or the task never wrote a result.
+- **Tray-menu "Run cleaner now" was firing the wrong task.** Previously called `GraceKeeper - Cleanup RNL` (`--mode safety-net`), which short-circuits if any cleanup happened in the last 11 hours. Now fires `GraceKeeper - Manual Cleanup` (no gate).
+
+### Added
+- **`--mode manual` for `GraceKeeper.Cleaner.exe`.** Force-bounce semantics like `Boot`, but flagged separately in the log so triage can distinguish manual triggers from boot triggers.
+- **Startup banner in `cleaner.log`.** Every Cleaner.exe run now writes a line at the top with the target path, whether it exists, the .rnl file count, and whether the process is running as SYSTEM. Lets remote triage tell apart "ran but no files to clean" from "ran but couldn't see the directory" from "ran as the wrong user."
+- **Diagnostics panel on the dashboard.** New "Open log folder" and "Copy diagnostics to clipboard" buttons. The clipboard copy is a markdown report with version info, elevation status, sentinel state, RNL target directory listing, raw `schtasks /Query` output for all GraceKeeper tasks, and tails of cleaner / dismisser / supervisor logs — designed to paste straight into a chat message when remote access isn't available.
+- **`GraceKeeper - Manual Cleanup` scheduled task.** Registered at install, no triggers, runs as SYSTEM. Removed cleanly on uninstall via new `RemoveManualCleanupTask` WiX custom action.
+
 ## [0.4.0.0] - 2026-05-26
 
 ### Fixed

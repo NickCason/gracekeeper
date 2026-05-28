@@ -51,8 +51,14 @@ public sealed class LogTailer
 
         var ts = DateTime.ParseExact(m.Groups["ts"].Value, "yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
         var rest = m.Groups["rest"].Value;
+        // v0.4.0 changed the cleaner log line from "deleted=N | ..." to
+        // "refreshed=N | freed-by-bounce=M | ...". Keep "deleted=" recognized
+        // for old log files left from earlier installs. The "started" banner
+        // (v0.4.1) intentionally falls through to Other — it's diagnostic, not
+        // a refresh event, so it must not increment the lifetime counter.
         var kind = rest.StartsWith("dismissed", StringComparison.OrdinalIgnoreCase) ? LogEventKind.Dismiss
                  : rest.StartsWith("deleted=", StringComparison.OrdinalIgnoreCase)   ? LogEventKind.Clean
+                 : rest.StartsWith("refreshed=", StringComparison.OrdinalIgnoreCase) ? LogEventKind.Clean
                  :                                                                     LogEventKind.Other;
         return new LogEvent { Timestamp = ts, Kind = kind, Description = rest, FileOffset = offset };
     }

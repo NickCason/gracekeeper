@@ -41,6 +41,7 @@ public class RunCleanerButton : ButtonBase
         {
             CleanerButtonState.Running => "Running",
             CleanerButtonState.Done => "Done",
+            CleanerButtonState.Failed => "Failed",
             _ => "Idle",
         };
         VisualStateManager.GoToState(this, stateName, useTransitions);

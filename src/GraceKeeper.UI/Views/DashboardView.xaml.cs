@@ -21,4 +21,10 @@ public partial class DashboardView : Page
 
     private void Settings_Click(object sender, RoutedEventArgs e)
         => ((MainWindow)Window.GetWindow(this)).NavigateToSettings();
+
+    private void OpenLogs_Click(object sender, RoutedEventArgs e)
+        => Vm.OpenLogsFolder();
+
+    private async void CopyDiagnostics_Click(object sender, RoutedEventArgs e)
+        => await Vm.CopyDiagnosticsAsync();
 }

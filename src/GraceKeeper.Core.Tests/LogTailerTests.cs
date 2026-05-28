@@ -34,7 +34,7 @@ public class LogTailerTests : IDisposable
     }
 
     [Fact]
-    public void ReadNew_ParsesCleanerLine()
+    public void ReadNew_ParsesLegacyCleanerLine_DeletedFormat()
     {
         File.WriteAllText(_tmpFile, "2026-05-16 14:30:00 | deleted=6 | locked=0 | duration=30ms\n");
         var tailer = new LogTailer(_tmpFile);
@@ -43,6 +43,34 @@ public class LogTailerTests : IDisposable
         Assert.Single(events);
         Assert.Equal(LogEventKind.Clean, events[0].Kind);
         Assert.Contains("deleted=6", events[0].Description);
+    }
+
+    [Fact]
+    public void ReadNew_ParsesV0_4_CleanerLine_RefreshedFormat()
+    {
+        // v0.4.0 changed the format. Without this classification, dashboard
+        // counters silently stopped advancing after upgrade.
+        File.WriteAllText(_tmpFile, "2026-05-28 08:58:41 | refreshed=3 | freed-by-bounce=0 | deferred=0 | still-locked=0 | duration=2ms\n");
+        var tailer = new LogTailer(_tmpFile);
+        var events = tailer.ReadNew(0, out _);
+
+        Assert.Single(events);
+        Assert.Equal(LogEventKind.Clean, events[0].Kind);
+        Assert.Contains("refreshed=3", events[0].Description);
+    }
+
+    [Fact]
+    public void ReadNew_BannerLine_IsClassifiedAsOther()
+    {
+        // The v0.4.1 "started" banner must not increment the counter — only
+        // the matching "refreshed=" result line counts as a Clean event.
+        File.WriteAllText(_tmpFile,
+            "2026-05-28 08:58:41 | started | mode=Manual | target=\"X\" | exists=True | files-found=3 | as-system=True\n");
+        var tailer = new LogTailer(_tmpFile);
+        var events = tailer.ReadNew(0, out _);
+
+        Assert.Single(events);
+        Assert.Equal(LogEventKind.Other, events[0].Kind);
     }
 
     [Fact]

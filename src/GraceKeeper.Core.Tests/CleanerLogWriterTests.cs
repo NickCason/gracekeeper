@@ -79,6 +79,18 @@ public class CleanerLogWriterTests : IDisposable
     }
 
     [Fact]
+    public void WriteStarted_WritesBannerLine()
+    {
+        var clock = FixedClock(LocalTime(2026, 5, 26, 14, 5, 7));
+        var w = new CleanerLogWriter(_logFile, clock, maxLines: 500);
+        w.WriteStarted("Manual", @"C:\ProgramData\Rockwell Automation\FactoryTalk Activation", true, 3, true);
+        var line = File.ReadAllLines(_logFile)[0];
+        Assert.Equal(
+            "2026-05-26 14:05:07 | started | mode=Manual | target=\"C:\\ProgramData\\Rockwell Automation\\FactoryTalk Activation\" | exists=True | files-found=3 | as-system=True",
+            line);
+    }
+
+    [Fact]
     public void Rotation_KeepsLastN_LinesOnly()
     {
         var clock = FixedClock(LocalTime(2026, 5, 26, 14, 5, 7));

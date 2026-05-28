@@ -32,6 +32,14 @@ public sealed class CleanerLogWriter
     public void WriteFailed(string exceptionTypeName, string message) =>
         AppendAndRotate($"{Stamp()} | failed: {exceptionTypeName}: {message}");
 
+    // Banner written at the top of every cleaner run. Captures what we found
+    // before any deletes — invaluable when the user reports "it didn't clean
+    // anything" and we can't see their machine. exists=False or files-found=0
+    // tells us the path resolution / FT install layout is the problem, not
+    // a permissions / locking issue.
+    public void WriteStarted(string mode, string targetDir, bool targetExists, int filesFound, bool runningAsSystem) =>
+        AppendAndRotate($"{Stamp()} | started | mode={mode} | target=\"{targetDir}\" | exists={targetExists} | files-found={filesFound} | as-system={runningAsSystem}");
+
     private string Stamp() => _clock.UtcNow.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss");
 
     private void AppendAndRotate(string line)

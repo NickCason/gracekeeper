@@ -43,6 +43,11 @@
                                 CornerRadius="4"
                                 Opacity="0"
                                 IsHitTestVisible="False"/>
+                        <Border x:Name="RedFailBg"
+                                Background="{DynamicResource Semantic.Bad}"
+                                CornerRadius="4"
+                                Opacity="0"
+                                IsHitTestVisible="False"/>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup Name="CleanerStates">
                                 <VisualState Name="Idle">
@@ -50,6 +55,7 @@
                                         <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
                                         <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
                                         <DoubleAnimation Storyboard.TargetName="GreenBg" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetName="RedFailBg" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
                                         <StringAnimationUsingKeyFrames Storyboard.TargetName="Label" Storyboard.TargetProperty="Text" Duration="0:0:0">
                                             <DiscreteStringKeyFrame KeyTime="0:0:0" Value="Run cleaner now"/>
                                         </StringAnimationUsingKeyFrames>
@@ -60,6 +66,7 @@
                                         <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
                                         <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
                                         <DoubleAnimation Storyboard.TargetName="GreenBg" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetName="RedFailBg" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
                                         <DoubleAnimation Storyboard.TargetName="SpinnerRotate" Storyboard.TargetProperty="Angle"
                                                          From="0" To="360" Duration="0:0:0.9" RepeatBehavior="Forever"/>
                                         <StringAnimationUsingKeyFrames Storyboard.TargetName="Label" Storyboard.TargetProperty="Text" Duration="0:0:0">
@@ -72,8 +79,20 @@
                                         <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
                                         <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
                                         <DoubleAnimation Storyboard.TargetName="GreenBg" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetName="RedFailBg" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
                                         <StringAnimationUsingKeyFrames Storyboard.TargetName="Label" Storyboard.TargetProperty="Text" Duration="0:0:0">
                                             <DiscreteStringKeyFrame KeyTime="0:0:0" Value="Done"/>
+                                        </StringAnimationUsingKeyFrames>
+                                    </Storyboard>
+                                </VisualState>
+                                <VisualState Name="Failed">
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Spinner" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Quick}"/>
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetName="GreenBg" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource Duration.Standard}"/>
+                                        <DoubleAnimation Storyboard.TargetName="RedFailBg" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource Duration.Standard}"/>
+                                        <StringAnimationUsingKeyFrames Storyboard.TargetName="Label" Storyboard.TargetProperty="Text" Duration="0:0:0">
+                                            <DiscreteStringKeyFrame KeyTime="0:0:0" Value="Failed"/>
                                         </StringAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>

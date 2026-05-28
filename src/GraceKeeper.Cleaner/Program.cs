@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using GraceKeeper.Core;
@@ -12,13 +13,27 @@ internal static class Program
         var mode = ParseMode(args);
         if (mode == null)
         {
-            Console.Error.WriteLine("Usage: GraceKeeper.Cleaner.exe --mode {boot|safety-net}");
+            Console.Error.WriteLine("Usage: GraceKeeper.Cleaner.exe --mode {boot|safety-net|manual}");
             return 2;
         }
 
         var clock = new SystemClock();
         var logWriter = new CleanerLogWriter(PathResolver.CleanerLogPath, clock);
         var disabledSentinel = new DisabledSentinel(PathResolver.DisabledSentinelPath);
+
+        // Always write a startup banner with target-path resolution and a file
+        // count BEFORE any gate, so even a "skipped" run leaves enough evidence
+        // to diagnose remote machines where we can't inspect anything live.
+        var targetDir = PathResolver.RnlTargetDir;
+        var targetExists = Directory.Exists(targetDir);
+        var filesFound = 0;
+        if (targetExists)
+        {
+            try { filesFound = Directory.GetFiles(targetDir, "*.rnl").Length; }
+            catch { /* permission/IO; banner records exists=true, files=0 */ }
+        }
+        var asSystem = string.Equals(Environment.UserName, "SYSTEM", StringComparison.OrdinalIgnoreCase);
+        logWriter.WriteStarted(mode.Value.ToString(), targetDir, targetExists, filesFound, asSystem);
 
         if (disabledSentinel.IsDisabled)
         {
@@ -49,7 +64,7 @@ internal static class Program
                     "FTActivationBoost"
                 },
                 TimeSpan.FromSeconds(10));
-            var cleaner = new RnlCleaner(PathResolver.RnlTargetDir, probe, bouncer);
+            var cleaner = new RnlCleaner(targetDir, probe, bouncer);
 
             using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(14));
             var result = await cleaner.RunAsync(mode.Value, cts.Token);
@@ -72,6 +87,7 @@ internal static class Program
             {
                 "boot" => CleanupMode.Boot,
                 "safety-net" => CleanupMode.SafetyNet,
+                "manual" => CleanupMode.Manual,
                 _ => null
             };
         }
