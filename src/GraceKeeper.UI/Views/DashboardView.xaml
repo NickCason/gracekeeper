@@ -106,9 +106,13 @@
             </StackPanel>
         </StackPanel>
 
-        <!-- Hero metric cards + activity log -->
-        <StackPanel>
-            <Grid Margin="0,0,0,12">
+        <!-- Hero metric cards + activity log. DockPanel here (not StackPanel)
+             so the activity log Border becomes LastChildFill and resizes with
+             the window when bottom rows grow/shrink — keeps the bottom of the
+             log visible regardless of how much real estate the action +
+             diagnostics rows take. -->
+        <DockPanel>
+            <Grid DockPanel.Dock="Top" Margin="0,0,0,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
@@ -159,10 +163,11 @@
             <Border Background="{DynamicResource Bg.Surface}"
                     BorderBrush="{DynamicResource Border.Default}" BorderThickness="1"
                     CornerRadius="8" Padding="14">
-                <StackPanel>
-                    <TextBlock Text="RECENT ACTIVITY" FontSize="10" FontWeight="SemiBold"
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="RECENT ACTIVITY" FontSize="10" FontWeight="SemiBold"
                                Foreground="{DynamicResource Text.Muted}" Margin="0,0,0,8"/>
-                    <ItemsControl ItemsSource="{Binding RecentActivity}" MaxHeight="240">
+                    <ItemsControl ItemsSource="{Binding RecentActivity}">
                         <ItemsControl.ItemContainerStyle>
                             <Style TargetType="ContentPresenter">
                                 <Setter Property="Opacity" Value="0"/>
@@ -239,8 +244,8 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
+                </DockPanel>
             </Border>
-        </StackPanel>
+        </DockPanel>
     </DockPanel>
 </Page>

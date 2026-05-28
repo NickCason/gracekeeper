@@ -68,7 +68,36 @@ public sealed class DashboardViewModel : ObservableObject
         _pollTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
         _pollTimer.Tick += (_, _) => RefreshFromLogs();
         _pollTimer.Start();
+        // Order matters: backfill recent history FIRST so the panel isn't
+        // blank for first-time open, THEN RefreshFromLogs picks up anything
+        // new since the persisted offset. RefreshFromLogs uses Insert(0,…)
+        // for new events, so they land above the backfilled history.
+        LoadRecentHistoryForDisplay();
         RefreshFromLogs();
+    }
+
+    // The dashboard window is recreated each time the user opens it from the
+    // tray (App.ShowMainWindow). Without this, RecentActivity starts empty
+    // and only fills as new events come in — historical events written while
+    // the panel was closed are invisible because the persisted offset has
+    // already passed them. Read enough of each log to show "what happened
+    // recently" on first open; counters and offsets are untouched (they're
+    // already correct from the polling that ran in prior VM lifetimes).
+    private void LoadRecentHistoryForDisplay()
+    {
+        const int historyLimit = 30;
+        var cleanerAll = new LogTailer(PathResolver.CleanerLogPath).ReadNew(0, out _);
+        var dismissAll = new LogTailer(PathResolver.DismisserLogPath).ReadNew(0, out _);
+        var history = cleanerAll.Where(e => e.Kind == LogEventKind.Clean)
+            .Concat(dismissAll.Where(e => e.Kind == LogEventKind.Dismiss))
+            .OrderByDescending(e => e.Timestamp)
+            .Take(historyLimit)
+            .ToList();
+        foreach (var ev in history) RecentActivity.Add(ev);
+
+        var lastClean = history.FirstOrDefault(e => e.Kind == LogEventKind.Clean);
+        if (lastClean != null)
+            TimeSinceLastCleanText = FormatElapsed(DateTime.Now - lastClean.Timestamp);
     }
 
     private void RefreshFromLogs()

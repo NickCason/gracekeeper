@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-05-28
+
+### Fixed
+- **Activity log was being clipped at the bottom.** The dashboard's fill area was a `StackPanel` so adding the new DIAGNOSTICS row pushed the bottom of the activity log off the visible area. Restructured the fill as a `DockPanel` with the metric cards docked to top and the activity log Border as `LastChildFill`, so the log shrinks/grows with the window instead of overflowing. Removed the hardcoded `MaxHeight=240` on the inner `ItemsControl` — the surrounding `ScrollViewer` now handles overflow at whatever height the log is given.
+- **Activity log was blank on every reopen from the tray.** The `DashboardViewModel` is recreated each time the user reopens the window from the tray (the polling timer dies with it). Counters and persisted offsets carry forward across reopens, but `RecentActivity` would start empty — and the polling loop only reads entries *past* the saved offset, so events that arrived while the window was closed were never displayed. On VM construction, the panel now backfills up to 30 most-recent `Clean` / `Dismiss` events from the log tails for display only; counters/offsets are untouched.
+
 ## [0.4.1] - 2026-05-28
 
 ### Fixed
